@@ -398,6 +398,7 @@ function enterFreeState() {
   }, 5000);
   document.body.classList.add('is-free');
   setMode('modeFree');
+  document.querySelector('.desktop-help').textContent = 'DRAG / ZOOM · SCROLL TO CONTINUE';
   setStep(4);
   controls.enabled = true;
   controls.autoRotate = true;
@@ -405,6 +406,7 @@ function enterFreeState() {
 }
 
 function restart() {
+  window.scrollTo({ top: 0, behavior: 'auto' });
   window.clearTimeout(finaleCondenseTimer);
   finaleCondenseTimer = null;
   for (const object of [...acceptedLines, ...freeLines]) {
@@ -438,6 +440,7 @@ function restart() {
   instructionIndex.textContent = '01 / 04';
   setInstruction('instructionFirst', 'hintFirst');
   setMode('modeWaiting');
+  document.querySelector('.desktop-help').textContent = 'DRAW: HOLD + MOVE · LATER: DRAG / ZOOM';
   setStep(1);
 }
 

@@ -57,7 +57,10 @@
       </div>
       <div class="finale-actions">
         <span>The bends are where you became yourself.</span>
-        <button id="restart" type="button">Begin again ↺</button>
+        <div class="finale-links">
+          <a href="#story">Continue ↓</a>
+          <button id="restart" type="button">Begin again ↺</button>
+        </div>
       </div>
     </section>
 
@@ -66,6 +69,67 @@
       <span class="desktop-help">DRAW: HOLD + MOVE &nbsp;·&nbsp; LATER: DRAG / ZOOM</span>
     </footer>
   </main>
+
+  <section id="story" class="story-scroll" aria-label="The story behind the experience">
+    <header class="story-rail">
+      <span>A/02 — THE WAYS WE BEND</span>
+      <a href="#scene">↑ RETURN TO YOUR LINES</a>
+    </header>
+
+    <section class="story-panel story-prologue">
+      <div class="mobile mobile-prologue" aria-hidden="true">
+        <i class="wire wire-one"></i>
+        <b class="shape disc-red"></b>
+        <b class="shape disc-blue"></b>
+        <b class="shape leaf-yellow"></b>
+        <b class="shape dot-black"></b>
+      </div>
+      <span class="story-index">THE STORY / 01</span>
+      <p class="story-kicker">It began with a pencil.</p>
+      <h2>Before we learned to write,<br>we learned to <em>stay in line.</em></h2>
+      <small>Keep scrolling ↓</small>
+    </section>
+
+    <section class="story-panel story-rule">
+      <span class="story-index">WHAT WE LEARNED / 02</span>
+      <h2>A gold star made<br><em>conformity</em> feel<br>like achievement.</h2>
+      <p>Neat. Correct. Expected.<br>Everything else was something to fix.</p>
+      <b class="story-star" aria-hidden="true">★</b>
+    </section>
+
+    <section class="story-panel story-nature">
+      <div class="mobile mobile-nature" aria-hidden="true">
+        <i class="wire wire-two"></i>
+        <b class="shape blade-blue"></b>
+        <b class="shape pebble-red"></b>
+        <b class="shape moon-black"></b>
+        <b class="shape sun-yellow"></b>
+      </div>
+      <span class="story-index">LOOK CLOSER / 03</span>
+      <h2>Nature has never<br>used a ruler.</h2>
+      <p>Rivers wander. Branches reach. Mountains rise without asking permission.</p>
+    </section>
+
+    <section class="story-panel story-turn">
+      <span class="story-index">WHAT REMAINS / 04</span>
+      <p>Every detour.<br>Every mistake.<br>Every change of mind.</p>
+      <h2>The bends are not<br>where we went wrong.</h2>
+    </section>
+
+    <section class="story-panel story-end">
+      <div class="mobile mobile-end" aria-hidden="true">
+        <i class="wire wire-three"></i>
+        <b class="shape drop-red"></b>
+        <b class="shape wing-blue"></b>
+        <b class="shape seed-yellow"></b>
+      </div>
+      <span class="story-index">A DIFFERENT MEASURE / 05</span>
+      <h2>We were never<br>failed straight lines.</h2>
+      <p>We were becoming ourselves.</p>
+      <a href="#scene">Draw yours again ↗</a>
+    </section>
+
+  </section>
 
   <audio id="audio" src="./audio/contemplation.mp3" loop preload="auto"></audio>
   <script type="module" src="./main.js"></script>
