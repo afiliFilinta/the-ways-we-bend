@@ -29,8 +29,10 @@ const COPY = {
   hintLonger: 'Give it a little more room',
   instructionSecond: 'Try another one.',
   hintSecond: 'No need to make it perfect',
-  instructionThird: 'Now draw the line that feels like yours.',
-  hintThird: 'Don’t overthink it',
+  instructionThird: 'One more. Make it properly straight.',
+  hintThird: 'Slowly. Neatly. No wandering.',
+  instructionFourth: 'Now draw the line that feels like yours.',
+  hintFourth: 'Don’t overthink it',
   modeReady: 'Waiting for you',
   modeWaiting: 'Waiting for your line',
   modeWatching: 'Watching closely',
@@ -125,7 +127,7 @@ function resize() {
 
 function setStep(value) {
   stepLabel.textContent = String(value).padStart(2, '0');
-  progressFill.style.width = `${(value / 3) * 100}%`;
+  progressFill.style.width = `${(value / 4) * 100}%`;
 }
 
 function beginExperience() {
@@ -156,7 +158,7 @@ function beginLine(event) {
   currentPoints = [point.clone()];
   const geometry = new THREE.BufferGeometry().setFromPoints(currentPoints);
   currentLine = new THREE.Line(geometry, new THREE.LineBasicMaterial({
-    color: trial === 2 ? COLORS.red : COLORS.ink,
+    color: trial === 3 ? COLORS.red : COLORS.ink,
     linewidth: 2,
   }));
   currentLine.position.z = 0.05 + trial * 0.08;
@@ -192,7 +194,7 @@ function finishLine() {
     return;
   }
 
-  if (trial < 2) {
+  if (trial < 3) {
     straightenCurrentLine();
   } else {
     liberateCurrentLine();
@@ -292,12 +294,15 @@ function showVerdict(evaluation) {
 function prepareNextTrial() {
   isBusy = false;
   setStep(trial + 1);
-  instructionIndex.textContent = `${String(trial + 1).padStart(2, '0')} / 03`;
-  setInstruction(
-    trial === 1 ? 'instructionSecond' : 'instructionThird',
-    trial === 1 ? 'hintSecond' : 'hintThird',
-  );
-  setMode(trial === 2 ? 'modeShifting' : 'modeWaiting');
+  instructionIndex.textContent = `${String(trial + 1).padStart(2, '0')} / 04`;
+  const nextPrompt = [
+    null,
+    ['instructionSecond', 'hintSecond'],
+    ['instructionThird', 'hintThird'],
+    ['instructionFourth', 'hintFourth'],
+  ][trial];
+  setInstruction(...nextPrompt);
+  setMode(trial === 3 ? 'modeShifting' : 'modeWaiting');
 }
 
 function liberateCurrentLine() {
@@ -393,7 +398,7 @@ function enterFreeState() {
   }, 5000);
   document.body.classList.add('is-free');
   setMode('modeFree');
-  setStep(3);
+  setStep(4);
   controls.enabled = true;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.38;
@@ -430,7 +435,7 @@ function restart() {
   document.body.classList.add('is-started');
   finale.classList.remove('is-visible', 'is-condensed');
   instruction.classList.add('is-visible');
-  instructionIndex.textContent = '01 / 03';
+  instructionIndex.textContent = '01 / 04';
   setInstruction('instructionFirst', 'hintFirst');
   setMode('modeWaiting');
   setStep(1);
