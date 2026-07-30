@@ -131,10 +131,12 @@ function setStep(value) {
 
 function beginExperience() {
   started = true;
+  document.body.classList.add('is-started');
   intro.classList.add('is-hidden');
   instruction.classList.add('is-visible');
   setMode('modeWaiting');
   setStep(1);
+  if (!audioOn) toggleSound();
 }
 
 function pointOnPlane(event) {
@@ -306,8 +308,11 @@ function liberateCurrentLine() {
       line.material.opacity = delay * line.userData.targetOpacity;
     });
 
-    acceptedLines.forEach((line) => {
-      line.material.opacity = THREE.MathUtils.lerp(0.46, 0.1, eased);
+    acceptedLines.forEach((line, index) => {
+      line.material.opacity = THREE.MathUtils.lerp(0.46, 0, eased);
+      line.position.y = THREE.MathUtils.lerp(0, 3.4 + index * 1.1, eased);
+      line.position.x = THREE.MathUtils.lerp(0, index === 0 ? -1.4 : 1.2, eased);
+      line.rotation.z = THREE.MathUtils.lerp(0, index === 0 ? -0.08 : 0.1, eased);
     });
 
     camera.position.z = THREE.MathUtils.lerp(28, 25.5, eased);
@@ -328,6 +333,7 @@ function resamplePoints(points, count) {
 function enterFreeState() {
   isBusy = false;
   isFree = true;
+  acceptedLines.forEach((line) => drawGroup.remove(line));
   instruction.classList.remove('is-visible');
   finale.classList.add('is-visible');
   document.body.classList.add('is-free');
@@ -339,10 +345,10 @@ function enterFreeState() {
 }
 
 function restart() {
-  for (const line of [...acceptedLines, ...freeLines]) {
-    line.geometry.dispose();
-    line.material.dispose();
-    line.parent?.remove(line);
+  for (const object of [...acceptedLines, ...freeLines]) {
+    object.geometry.dispose();
+    object.material.dispose();
+    object.parent?.remove(object);
   }
   acceptedLines.length = 0;
   freeLines.length = 0;
@@ -364,6 +370,7 @@ function restart() {
   scene.background.set(COLORS.paper);
   scene.fog.color.set(COLORS.paper);
   document.body.classList.remove('is-free');
+  document.body.classList.add('is-started');
   finale.classList.remove('is-visible');
   instruction.classList.add('is-visible');
   instructionIndex.textContent = '01 / 03';
