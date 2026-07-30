@@ -342,9 +342,14 @@ body.is-free .experience::before {
   color: var(--ink);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(28px);
+  transform: translateY(18px);
   backdrop-filter: blur(10px);
-  transition: opacity 1.2s ease 1s, transform 1.2s ease 1s;
+  transition:
+    opacity 1.2s ease 1s,
+    transform 1.2s ease 1s,
+    border-color 2.6s ease 1.2s,
+    background-color 2.6s ease 1.2s,
+    backdrop-filter 2.6s ease 1.2s;
 }
 
 .finale.is-visible {
@@ -353,7 +358,19 @@ body.is-free .experience::before {
   transform: translateY(0);
 }
 
-.finale h2 {
+.finale-opening {
+  max-height: 190px;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-height 3.6s ease, opacity 3.2s ease, margin 3.6s ease;
+}
+
+.finale-opening p {
+  margin: 0 0 14px;
+  font: 400 italic 16px/1.45 Georgia, serif;
+}
+
+.finale-opening h2 {
   margin: 0;
   font-size: clamp(23px, 2.5vw, 34px);
   font-weight: 500;
@@ -362,13 +379,25 @@ body.is-free .experience::before {
   text-align: left;
 }
 
-.finale h2 em {
+.finale-opening h2 em {
   color: var(--red);
   font-family: Georgia, serif;
   font-weight: 400;
 }
 
-.finale > div {
+.finale.is-condensed .finale-opening {
+  max-height: 0;
+  margin: 0;
+  opacity: 0;
+}
+
+.finale.is-condensed {
+  border-color: transparent;
+  background: transparent;
+  backdrop-filter: blur(0);
+}
+
+.finale-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -377,6 +406,11 @@ body.is-free .experience::before {
   font-size: 9px;
   font-weight: 500;
   letter-spacing: .02em;
+  transition: margin 3.6s ease;
+}
+
+.finale.is-condensed .finale-actions {
+  margin-top: 0;
 }
 
 #restart {
@@ -474,11 +508,11 @@ body.is-free #progress-fill {
     padding: 14px;
   }
 
-  .finale h2 {
+  .finale-opening h2 {
     font-size: clamp(22px, 6.5vw, 30px);
   }
 
-  .finale > div {
+  .finale-actions {
     align-items: flex-start;
     gap: 10px;
   }

@@ -111,6 +111,7 @@ let pointerDownAt = null;
 let audioOn = false;
 let freeMix = 0;
 let lastTime = performance.now();
+let finaleCondenseTimer = null;
 
 const animations = [];
 const freeLines = [];
@@ -335,7 +336,12 @@ function enterFreeState() {
   isFree = true;
   acceptedLines.forEach((line) => drawGroup.remove(line));
   instruction.classList.remove('is-visible');
+  finale.classList.remove('is-condensed');
   finale.classList.add('is-visible');
+  window.clearTimeout(finaleCondenseTimer);
+  finaleCondenseTimer = window.setTimeout(() => {
+    finale.classList.add('is-condensed');
+  }, 5000);
   document.body.classList.add('is-free');
   setMode('modeFree');
   setStep(3);
@@ -345,6 +351,8 @@ function enterFreeState() {
 }
 
 function restart() {
+  window.clearTimeout(finaleCondenseTimer);
+  finaleCondenseTimer = null;
   for (const object of [...acceptedLines, ...freeLines]) {
     object.geometry.dispose();
     object.material.dispose();
@@ -371,7 +379,7 @@ function restart() {
   scene.fog.color.set(COLORS.paper);
   document.body.classList.remove('is-free');
   document.body.classList.add('is-started');
-  finale.classList.remove('is-visible');
+  finale.classList.remove('is-visible', 'is-condensed');
   instruction.classList.add('is-visible');
   instructionIndex.textContent = '01 / 03';
   verdictKey = 'verdictOne';
