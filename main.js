@@ -19,6 +19,8 @@ const progressFill = document.querySelector('#progress-fill');
 const modeLabel = document.querySelector('#mode');
 const soundButton = document.querySelector('#sound');
 const audio = document.querySelector('#audio');
+const returnToSceneLink = document.querySelector('[data-return-to-scene]');
+const restartExperienceLink = document.querySelector('[data-restart-experience]');
 
 const COPY = {
   soundOn: 'SOUND: ON',
@@ -444,6 +446,20 @@ function restart() {
   setStep(1);
 }
 
+function returnToScene(event) {
+  event.preventDefault();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.history.replaceState(null, '', '#scene');
+  renderer.domElement.focus({ preventScroll: true });
+}
+
+function restartFromStory(event) {
+  event.preventDefault();
+  restart();
+  window.history.replaceState(null, '', '#scene');
+  renderer.domElement.focus({ preventScroll: true });
+}
+
 async function toggleSound() {
   audioOn = !audioOn;
   soundButton.setAttribute('aria-pressed', String(audioOn));
@@ -495,6 +511,8 @@ function animate(time) {
 
 startButton.addEventListener('click', beginExperience);
 restartButton.addEventListener('click', restart);
+returnToSceneLink.addEventListener('click', returnToScene);
+restartExperienceLink.addEventListener('click', restartFromStory);
 soundButton.addEventListener('click', toggleSound);
 renderer.domElement.addEventListener('pointerdown', beginLine);
 renderer.domElement.addEventListener('pointermove', extendLine);
