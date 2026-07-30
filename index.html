@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#e9e4da">
+  <meta name="description" content="A small interactive experiment about the beautiful ways we bend.">
+  <title>The Ways We Bend — A Three.js Experiment</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="experience">
+    <div id="scene" aria-label="Interactive three-dimensional drawing space"></div>
+
+    <header class="topbar">
+      <a href="./" class="identity" aria-label="Restart the experience">
+        <span>A/02</span>
+        <strong>THE WAYS WE BEND</strong>
+      </a>
+      <div class="progress" aria-label="Experience progress">
+        <span id="step">00</span>
+        <i><b id="progress-fill"></b></i>
+        <span>03</span>
+      </div>
+      <div class="header-actions">
+        <button id="sound" type="button" aria-pressed="false">SOUND: OFF</button>
+      </div>
+    </header>
+
+    <section id="intro" class="intro">
+      <p>A small experiment about all the ways we bend.</p>
+      <h1>We were taught<br>to draw a <em>straight line.</em></h1>
+      <button id="start" type="button">
+        <span>Let’s begin</span>
+        <i>→</i>
+      </button>
+    </section>
+
+    <section id="instruction" class="instruction" aria-live="polite">
+      <span id="instruction-index">01 / 03</span>
+      <p id="instruction-copy">Draw a line. Any line.</p>
+      <small id="instruction-hint">Hold, move, then let go</small>
+    </section>
+
+    <div id="verdict" class="verdict" aria-live="assertive">
+      <span class="verdict-mark">✓</span>
+      <p id="verdict-copy">There. Neater.</p>
+    </div>
+
+    <section id="finale" class="finale">
+      <p>Nothing went wrong.</p>
+      <h2>You were never meant<br>to be <em>a straight line.</em></h2>
+      <div>
+        <span>The bends are where you became yourself.</span>
+        <button id="restart" type="button">Begin again ↺</button>
+      </div>
+    </section>
+
+    <footer>
+      <span id="mode">Waiting for you</span>
+      <span class="desktop-help">DRAW: HOLD + MOVE &nbsp;·&nbsp; LATER: DRAG / ZOOM</span>
+    </footer>
+  </main>
+
+  <audio id="audio" src="./audio/contemplation.mp3" loop preload="auto"></audio>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
