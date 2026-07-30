@@ -10,6 +10,8 @@ const instructionCopy = document.querySelector('#instruction-copy');
 const instructionHint = document.querySelector('#instruction-hint');
 const verdict = document.querySelector('#verdict');
 const verdictCopy = document.querySelector('#verdict-copy');
+const verdictScore = document.querySelector('#verdict-score');
+const verdictGrade = document.querySelector('#verdict-grade');
 const finale = document.querySelector('#finale');
 const restartButton = document.querySelector('#restart');
 const stepLabel = document.querySelector('#step');
@@ -29,8 +31,6 @@ const COPY = {
   hintSecond: 'No need to make it perfect',
   instructionThird: 'Now draw the line that feels like yours.',
   hintThird: 'Don’t overthink it',
-  verdictOne: 'There. Neater.',
-  verdictTwo: 'Just as expected.',
   modeReady: 'Waiting for you',
   modeWaiting: 'Waiting for your line',
   modeWatching: 'Watching closely',
@@ -42,8 +42,6 @@ const COPY = {
 let modeKey = 'modeReady';
 let instructionCopyKey = 'instructionFirst';
 let instructionHintKey = 'hintFirst';
-let verdictKey = 'verdictOne';
-
 function t(key) {
   return COPY[key] ?? key;
 }
@@ -205,6 +203,7 @@ function straightenCurrentLine() {
   isBusy = true;
   const line = currentLine;
   const source = currentPoints.map((point) => point.clone());
+  const evaluation = evaluateStraightness(source);
   const first = source[0].clone();
   const last = source[source.length - 1].clone();
   const targets = source.map((_, index) => first.clone().lerp(last, index / (source.length - 1)));
@@ -222,18 +221,68 @@ function straightenCurrentLine() {
     line.material.transparent = true;
     line.material.opacity = 0.46;
     acceptedLines.push(line);
-    showVerdict();
+    showVerdict(evaluation);
     trial += 1;
     currentLine = null;
     currentPoints = [];
-    window.setTimeout(prepareNextTrial, 900);
+    window.setTimeout(prepareNextTrial, 2300);
     return false;
   });
 }
 
-function showVerdict() {
-  verdictKey = trial === 0 ? 'verdictOne' : 'verdictTwo';
-  verdictCopy.textContent = t(verdictKey);
+function evaluateStraightness(points) {
+  const first = points[0];
+  const last = points[points.length - 1];
+  const direction = last.clone().sub(first);
+  const directDistance = direction.length();
+  if (directDistance < 0.001) {
+    return {
+      score: 0,
+      grade: 'D',
+      feedback: 'Try again. Choose the destination first, then let your hand follow.',
+    };
+  }
+
+  let pathLength = 0;
+  let squaredDeviation = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    pathLength += points[index - 1].distanceTo(points[index]);
+  }
+  for (const point of points) {
+    const relative = point.clone().sub(first);
+    const projection = relative.dot(direction) / direction.lengthSq();
+    const nearest = first.clone().addScaledVector(direction, projection);
+    squaredDeviation += point.distanceToSquared(nearest);
+  }
+
+  const efficiency = THREE.MathUtils.clamp(directDistance / pathLength, 0, 1);
+  const normalizedDeviation = Math.sqrt(squaredDeviation / points.length) / directDistance;
+  const alignment = THREE.MathUtils.clamp(1 - normalizedDeviation * 7, 0, 1);
+  const score = Math.round((efficiency * 0.55 + alignment * 0.45) * 100);
+
+  if (score >= 92) {
+    return { score, grade: 'A+', feedback: 'Excellent. Confident, controlled, and beautifully direct.' };
+  }
+  if (score >= 80) {
+    return { score, grade: 'A', feedback: 'Good work. Steady, with only a little hesitation.' };
+  }
+  if (score >= 65) {
+    return { score, grade: 'B', feedback: 'Promising. Keep your hand calm and trust the direction.' };
+  }
+  if (score >= 45) {
+    return { score, grade: 'C', feedback: 'You’re searching. Slow down and guide the line with more intention.' };
+  }
+  return {
+    score,
+    grade: 'D',
+    feedback: 'Try again. Choose the destination first, then let your hand follow.',
+  };
+}
+
+function showVerdict(evaluation) {
+  verdictGrade.textContent = evaluation.grade;
+  verdictScore.textContent = `${evaluation.score} / 100`;
+  verdictCopy.textContent = evaluation.feedback;
   verdict.classList.remove('is-visible');
   void verdict.offsetWidth;
   verdict.classList.add('is-visible');
@@ -382,7 +431,6 @@ function restart() {
   finale.classList.remove('is-visible', 'is-condensed');
   instruction.classList.add('is-visible');
   instructionIndex.textContent = '01 / 03';
-  verdictKey = 'verdictOne';
   setInstruction('instructionFirst', 'hintFirst');
   setMode('modeWaiting');
   setStep(1);

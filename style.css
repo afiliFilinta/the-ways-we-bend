@@ -288,10 +288,10 @@ body.is-free .experience::before {
   top: 50%;
   left: 50%;
   display: flex;
-  width: min(260px, calc(100vw - 48px));
+  width: min(390px, calc(100vw - 48px));
   align-items: center;
   gap: 15px;
-  padding: 13px 4px;
+  padding: 14px 5px;
   border-top: 1px solid var(--red);
   border-bottom: 1px solid var(--red);
   background: rgba(233, 228, 218, .72);
@@ -313,19 +313,29 @@ body.is-free .experience::before {
   font: 400 16px Georgia, serif;
 }
 
-.verdict p {
+.verdict-copy {
+  display: grid;
+  gap: 5px;
+}
+
+.verdict-copy strong {
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+
+.verdict-copy p {
   margin: 0;
-  font: 400 italic 22px/1 Georgia, serif;
+  font: 400 italic 17px/1.15 Georgia, serif;
   letter-spacing: -.02em;
 }
 
 .verdict.is-visible {
-  animation: stamp 1.25s ease both;
+  animation: stamp 2.8s ease both;
 }
 
 @keyframes stamp {
   0% { opacity: 0; transform: translate(-50%, -36%); }
-  22%, 72% { opacity: 1; transform: translate(-50%, -50%); }
+  14%, 82% { opacity: 1; transform: translate(-50%, -50%); }
   100% { opacity: 0; transform: translate(-50%, -60%); }
 }
 
