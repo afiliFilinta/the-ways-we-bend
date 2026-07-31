@@ -85,6 +85,254 @@ const COLORS = {
   finalPaper: 0xd7d0c3,
 };
 
+const PENCIL_AUDIO_URL = './audio/pencil-on-paper.mp3';
+
+class PencilAudioEngine {
+  constructor(url) {
+    this.url = url;
+    this.context = null;
+    this.masterGain = null;
+    this.buffer = null;
+    this.grains = [];
+    this.activeSources = new Set();
+    this.readyPromise = null;
+    this.enabled = false;
+    this.isDrawing = false;
+    this.lastPointer = null;
+    this.distanceSinceGrain = 0;
+    this.lastGrainAt = -Infinity;
+    this.triggerCount = 0;
+  }
+
+  async ensureReady() {
+    if (this.buffer) return;
+    if (this.readyPromise) return this.readyPromise;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      document.body.dataset.pencilAudioStatus = 'unsupported';
+      throw new Error('Web Audio API is not supported.');
+    }
+
+    this.context = new AudioContextClass({ latencyHint: 'interactive' });
+    this.masterGain = this.context.createGain();
+    this.masterGain.gain.value = 0.0001;
+    this.masterGain.connect(this.context.destination);
+    document.body.dataset.pencilAudioStatus = 'loading';
+
+    this.readyPromise = fetch(this.url)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Pencil audio request failed: ${response.status}`);
+        return response.arrayBuffer();
+      })
+      .then((arrayBuffer) => this.context.decodeAudioData(arrayBuffer))
+      .then((buffer) => {
+        this.buffer = buffer;
+        this.grains = this.findActiveGrains(buffer);
+        document.body.dataset.pencilAudioStatus = 'ready';
+      })
+      .catch((error) => {
+        document.body.dataset.pencilAudioStatus = 'error';
+        console.warn('Pencil audio could not be prepared.', error);
+        throw error;
+      });
+
+    return this.readyPromise;
+  }
+
+  findActiveGrains(buffer) {
+    const samples = buffer.getChannelData(0);
+    const windowFrames = Math.max(1, Math.floor(buffer.sampleRate * 0.24));
+    const stepFrames = Math.max(1, Math.floor(buffer.sampleRate * 0.11));
+    const measured = [];
+
+    for (let start = 0; start + windowFrames < samples.length; start += stepFrames) {
+      let sumSquares = 0;
+      let sampleCount = 0;
+      for (let index = start; index < start + windowFrames; index += 2) {
+        sumSquares += samples[index] * samples[index];
+        sampleCount += 1;
+      }
+      measured.push({
+        offset: start / buffer.sampleRate,
+        duration: windowFrames / buffer.sampleRate,
+        energy: Math.sqrt(sumSquares / Math.max(1, sampleCount)),
+      });
+    }
+
+    const maximumEnergy = Math.max(...measured.map((grain) => grain.energy), 0.0001);
+    const active = measured.filter((grain) => grain.energy >= maximumEnergy * 0.08);
+    const candidates = active.length >= 12 ? active : measured;
+    return candidates.sort((first, second) => first.energy - second.energy);
+  }
+
+  async setEnabled(enabled) {
+    this.enabled = enabled;
+
+    if (!enabled) {
+      this.end();
+      this.fadeMasterTo(0.0001, 0.025);
+      return;
+    }
+
+    await this.ensureReady();
+    if (this.context.state === 'suspended') await this.context.resume();
+    this.fadeMasterTo(1, 0.04);
+  }
+
+  fadeMasterTo(value, duration) {
+    if (!this.context || !this.masterGain) return;
+    const now = this.context.currentTime;
+    const gain = this.masterGain.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(Math.max(0.0001, gain.value), now);
+    gain.linearRampToValueAtTime(value, now + duration);
+  }
+
+  begin(event, rect) {
+    if (!this.enabled) return;
+    this.isDrawing = true;
+    this.lastPointer = {
+      x: event.clientX,
+      y: event.clientY,
+      time: event.timeStamp,
+    };
+    this.distanceSinceGrain = 0;
+    this.lastGrainAt = -Infinity;
+    this.triggerGrain(0.18, event, rect, true);
+  }
+
+  move(event, rect) {
+    if (!this.enabled || !this.isDrawing) return;
+    const coalesced = typeof event.getCoalescedEvents === 'function'
+      ? event.getCoalescedEvents()
+      : [];
+    const samples = coalesced.length ? coalesced : [event];
+
+    for (const sample of samples) {
+      if (!this.lastPointer) {
+        this.lastPointer = {
+          x: sample.clientX,
+          y: sample.clientY,
+          time: sample.timeStamp,
+        };
+        continue;
+      }
+
+      const distance = Math.hypot(
+        sample.clientX - this.lastPointer.x,
+        sample.clientY - this.lastPointer.y,
+      );
+      const elapsed = THREE.MathUtils.clamp(
+        sample.timeStamp - this.lastPointer.time,
+        8,
+        80,
+      );
+      const speed = distance / elapsed;
+      const speedMix = THREE.MathUtils.clamp((speed - 0.04) / 1.35, 0, 1);
+      this.distanceSinceGrain += distance;
+
+      const distanceGate = THREE.MathUtils.lerp(18, 8, speedMix);
+      const timeGate = THREE.MathUtils.lerp(72, 34, speedMix);
+      if (
+        this.distanceSinceGrain >= distanceGate
+        && sample.timeStamp - this.lastGrainAt >= timeGate
+      ) {
+        this.triggerGrain(speedMix, sample, rect);
+        this.distanceSinceGrain = 0;
+        this.lastGrainAt = sample.timeStamp;
+      }
+
+      this.lastPointer = {
+        x: sample.clientX,
+        y: sample.clientY,
+        time: sample.timeStamp,
+      };
+    }
+  }
+
+  triggerGrain(speedMix, event, rect, isOnset = false) {
+    if (
+      !this.enabled
+      || !this.context
+      || !this.buffer
+      || !this.masterGain
+      || !this.grains.length
+      || this.activeSources.size >= 6
+    ) return;
+
+    const targetMix = isOnset ? 0.24 : 0.18 + speedMix * 0.76;
+    const targetIndex = Math.round((this.grains.length - 1) * targetMix);
+    const jitter = Math.floor(Math.random() * 7) - 3;
+    const grain = this.grains[
+      THREE.MathUtils.clamp(targetIndex + jitter, 0, this.grains.length - 1)
+    ];
+    const sourceDuration = THREE.MathUtils.lerp(0.26, 0.13, speedMix);
+    const offsetJitter = Math.random() * Math.max(0, grain.duration - sourceDuration);
+    const offset = Math.min(
+      grain.offset + offsetJitter,
+      this.buffer.duration - sourceDuration - 0.01,
+    );
+    const playbackRate = 0.92 + speedMix * 0.16 + (Math.random() - 0.5) * 0.04;
+    const audibleDuration = sourceDuration / playbackRate;
+    const pressure = event.pointerType === 'pen' && event.pressure > 0
+      ? event.pressure
+      : 0.5;
+    const peakGain = (isOnset
+      ? 0.045
+      : THREE.MathUtils.lerp(0.045, 0.11, speedMix))
+      * THREE.MathUtils.lerp(0.88, 1.12, pressure);
+    const pan = THREE.MathUtils.clamp(
+      ((event.clientX - rect.left) / rect.width) * 0.7 - 0.35,
+      -0.35,
+      0.35,
+    );
+    const now = this.context.currentTime;
+    const attack = 0.006;
+    const release = Math.min(0.035, audibleDuration * 0.35);
+
+    const source = this.context.createBufferSource();
+    const gainNode = this.context.createGain();
+    const panner = this.context.createStereoPanner();
+    source.buffer = this.buffer;
+    source.playbackRate.value = playbackRate;
+    panner.pan.value = pan;
+
+    gainNode.gain.setValueAtTime(0.0001, now);
+    gainNode.gain.linearRampToValueAtTime(peakGain, now + attack);
+    gainNode.gain.setValueAtTime(
+      peakGain,
+      now + Math.max(attack, audibleDuration - release),
+    );
+    gainNode.gain.linearRampToValueAtTime(0.0001, now + audibleDuration);
+
+    source.connect(gainNode);
+    gainNode.connect(panner);
+    panner.connect(this.masterGain);
+
+    this.activeSources.add(source);
+    this.triggerCount += 1;
+    document.body.dataset.pencilAudioGrains = String(this.triggerCount);
+    document.body.dataset.pencilAudioVoices = String(this.activeSources.size);
+    source.onended = () => {
+      this.activeSources.delete(source);
+      source.disconnect();
+      gainNode.disconnect();
+      panner.disconnect();
+      document.body.dataset.pencilAudioVoices = String(this.activeSources.size);
+    };
+    source.start(now, Math.max(0, offset), sourceDuration);
+  }
+
+  end() {
+    this.isDrawing = false;
+    this.lastPointer = null;
+    this.distanceSinceGrain = 0;
+  }
+}
+
+const pencilAudio = new PencilAudioEngine(PENCIL_AUDIO_URL);
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(COLORS.paper);
 scene.fog = new THREE.FogExp2(COLORS.paper, 0.012);
@@ -229,6 +477,7 @@ function beginLine(event) {
   const point = pointOnPlane(event);
   if (!point) return;
 
+  const drawingRect = renderer.domElement.getBoundingClientRect();
   isDrawing = true;
   pointerDownAt = { x: event.clientX, y: event.clientY };
   currentPoints = [point.clone()];
@@ -241,12 +490,14 @@ function beginLine(event) {
   currentLine.position.z = 0.05 + trial * 0.08;
   drawGroup.add(currentLine);
   renderer.domElement.setPointerCapture(event.pointerId);
+  pencilAudio.begin(event, drawingRect);
   setInstruction(instructionCopyKey, 'hintRelease');
   setMode('modeWatching');
 }
 
 function extendLine(event) {
   if (!isDrawing || !currentLine) return;
+  pencilAudio.move(event, renderer.domElement.getBoundingClientRect());
   const point = pointOnPlane(event);
   if (!point) return;
 
@@ -261,6 +512,7 @@ function extendLine(event) {
 function finishLine() {
   if (!isDrawing) return;
   isDrawing = false;
+  pencilAudio.end();
 
   if (currentPoints.length < 5) {
     if (currentLine) drawGroup.remove(currentLine);
@@ -672,6 +924,7 @@ function restart() {
   window.scrollTo({ top: 0, behavior: 'auto' });
   window.clearTimeout(finaleCondenseTimer);
   finaleCondenseTimer = null;
+  pencilAudio.end();
   for (const object of [...acceptedLines, ...freeLines]) {
     object.geometry.dispose();
     object.material.dispose();
@@ -734,14 +987,20 @@ async function toggleSound() {
   audio.volume = 0.28;
   if (audioOn) {
     try {
-      await audio.play();
+      await Promise.all([
+        audio.play(),
+        pencilAudio.setEnabled(true),
+      ]);
     } catch {
       audioOn = false;
       soundButton.setAttribute('aria-pressed', 'false');
       soundButton.textContent = t('soundOff');
+      audio.pause();
+      pencilAudio.setEnabled(false);
     }
   } else {
     audio.pause();
+    pencilAudio.setEnabled(false);
   }
 }
 
