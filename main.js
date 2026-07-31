@@ -86,6 +86,7 @@ const COLORS = {
 };
 
 const PENCIL_AUDIO_URL = './audio/pencil-on-paper.mp3';
+const PENCIL_AUDIO_GAIN = 1.25;
 
 class PencilAudioEngine {
   constructor(url) {
@@ -177,7 +178,7 @@ class PencilAudioEngine {
 
     await this.ensureReady();
     if (this.context.state === 'suspended') await this.context.resume();
-    this.fadeMasterTo(1, 0.04);
+    this.fadeMasterTo(PENCIL_AUDIO_GAIN, 0.04);
   }
 
   fadeMasterTo(value, duration) {
