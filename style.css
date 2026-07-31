@@ -315,7 +315,7 @@ body.is-free .experience::before {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, -12px);
-  transition: opacity .5s ease, transform .5s ease;
+  transition: opacity .9s ease, transform .9s ease;
 }
 
 .instruction.is-visible {
@@ -353,7 +353,7 @@ body.is-free .experience::before {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, -48%) scale(.98);
-  transition: opacity .45s ease, transform .45s ease, border-radius .55s ease;
+  transition: opacity 1.1s ease, transform 1.1s ease, border-radius 1.1s ease;
 }
 
 .drawing-boundary span {
@@ -424,6 +424,7 @@ body.is-free .experience::before {
   pointer-events: none;
   transform: translate(-50%, -45%);
   backdrop-filter: blur(8px);
+  transition: opacity 1s ease, transform 1s ease;
 }
 
 .verdict-mark {

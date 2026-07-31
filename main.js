@@ -52,6 +52,7 @@ const COPY = {
 };
 
 const MIN_PASSING_SCORE = 65;
+const MIN_BOUNDARY_PASS_RATIO = 0.999;
 const TRIAL_PROMPTS = [
   ['instructionFirst', 'hintFirst'],
   ['instructionSecond', 'hintSecond'],
@@ -93,7 +94,10 @@ const PENCIL_AUDIO_GAIN = 1.25;
 const DRAWING_LINE_WIDTH = 2.4;
 const FREE_LINE_WIDTH = 1;
 const MIN_FREE_LINE_SCALE = 0.001;
-const FREE_LINE_GROWTH_PER_SECOND = 0.016;
+const FREE_LINE_GROWTH_PER_SECOND = 0.009;
+const LIBERATION_DURATION_MS = 3600;
+const CAMERA_AUTO_ROTATE_SPEED = 0.24;
+const CAMERA_MOTION_RAMP_MS = 6000;
 
 function createLineGeometry(points) {
   const drawablePoints = points.length === 1 ? [points[0], points[0]] : points;
@@ -394,6 +398,7 @@ let audioOn = false;
 let freeMix = 0;
 let lastTime = performance.now();
 let finaleCondenseTimer = null;
+let freeStateStartedAt = null;
 
 const animations = [];
 const freeLines = [];
@@ -751,18 +756,22 @@ function evaluateStraightness(points, { containmentRatio = null, traceEvaluation
   const straightnessScore = (efficiency * 0.55 + alignment * 0.45) * 100;
   const boundaryMultiplier = containmentRatio === null ? 1 : 0.2 + containmentRatio * 0.8;
   const traceMultiplier = traceEvaluation === null ? 1 : 0.12 + traceEvaluation.accuracy * 0.88;
-  const score = Math.round(straightnessScore * boundaryMultiplier * traceMultiplier);
+  const weightedScore = Math.round(straightnessScore * boundaryMultiplier * traceMultiplier);
+  const boundaryPassed = containmentRatio === null
+    || containmentRatio >= MIN_BOUNDARY_PASS_RATIO;
+  const boundaryScoreCap = boundaryPassed ? 100 : MIN_PASSING_SCORE - 1;
+  const score = Math.min(weightedScore, boundaryScoreCap);
   const tracePassed = traceEvaluation === null || (
-    containmentRatio >= 0.95
+    boundaryPassed
     && traceEvaluation.proximity >= 0.72
     && traceEvaluation.coverage >= 0.85
   );
-  const retryRequired = score < MIN_PASSING_SCORE || !tracePassed;
+  const retryRequired = score < MIN_PASSING_SCORE || !boundaryPassed || !tracePassed;
   let feedback;
 
   if (traceEvaluation !== null && !tracePassed) {
-    if (containmentRatio < 0.8) {
-      feedback = 'Stay inside the frame and follow the guide line.';
+    if (!boundaryPassed) {
+      feedback = 'Keep the entire line inside the frame, then follow the guide.';
     } else if (traceEvaluation.proximity < 0.45) {
       feedback = 'Follow the guide. A straight line elsewhere does not count.';
     } else if (traceEvaluation.coverage < 0.85) {
@@ -770,7 +779,7 @@ function evaluateStraightness(points, { containmentRatio = null, traceEvaluation
     } else {
       feedback = 'Keep your hand closer to the guide and try again.';
     }
-  } else if (containmentRatio !== null && containmentRatio < 0.98) {
+  } else if (containmentRatio !== null && !boundaryPassed) {
     if (containmentRatio < 0.25) {
       feedback = 'Most of your line fell outside the frame. Stay within the boundary.';
     } else if (containmentRatio < 0.8) {
@@ -837,6 +846,9 @@ function prepareNextTrial() {
 
 function liberateCurrentLine() {
   isBusy = true;
+  instruction.classList.remove('is-visible');
+  setDrawingBoundaryVisible(false);
+  verdict.classList.remove('is-visible');
   const source = resamplePoints(currentPoints, 64);
   drawGroup.remove(currentLine);
   currentLine.geometry.dispose();
@@ -908,11 +920,14 @@ function liberateCurrentLine() {
 
   const startedAt = performance.now();
   animations.push((time) => {
-    const raw = Math.min(1, (time - startedAt) / 2300);
-    const eased = 1 - Math.pow(1 - raw, 4);
-    const widthMix = THREE.MathUtils.smoothstep(raw, 0, 1);
-    freeMix = eased;
-    scene.background.lerpColors(new THREE.Color(COLORS.paper), new THREE.Color(COLORS.finalPaper), eased);
+    const raw = Math.min(1, (time - startedAt) / LIBERATION_DURATION_MS);
+    const transitionMix = THREE.MathUtils.smootherstep(raw, 0, 1);
+    freeMix = transitionMix;
+    scene.background.lerpColors(
+      new THREE.Color(COLORS.paper),
+      new THREE.Color(COLORS.finalPaper),
+      transitionMix,
+    );
     scene.fog.color.copy(scene.background);
 
     freeLines.forEach((line, index) => {
@@ -928,20 +943,20 @@ function liberateCurrentLine() {
       line.material.linewidth = THREE.MathUtils.lerp(
         DRAWING_LINE_WIDTH,
         FREE_LINE_WIDTH,
-        widthMix,
+        transitionMix,
       );
     });
 
     acceptedLines.forEach((line, index) => {
-      line.material.opacity = THREE.MathUtils.lerp(1, 0, eased);
-      line.position.y = THREE.MathUtils.lerp(0, 3.4 + index * 1.1, eased);
-      line.position.x = THREE.MathUtils.lerp(0, index === 0 ? -1.4 : 1.2, eased);
-      line.rotation.z = THREE.MathUtils.lerp(0, index === 0 ? -0.08 : 0.1, eased);
+      line.material.opacity = THREE.MathUtils.lerp(1, 0, transitionMix);
+      line.position.y = THREE.MathUtils.lerp(0, 3.4 + index * 1.1, transitionMix);
+      line.position.x = THREE.MathUtils.lerp(0, index === 0 ? -1.4 : 1.2, transitionMix);
+      line.rotation.z = THREE.MathUtils.lerp(
+        0,
+        index === 0 ? -0.08 : 0.1,
+        transitionMix,
+      );
     });
-
-    camera.position.z = THREE.MathUtils.lerp(28, 25.5, eased);
-    camera.position.x = Math.sin(eased * Math.PI) * 2.2;
-    camera.lookAt(0, 0, 0);
 
     if (raw < 1) return true;
     enterFreeState();
@@ -972,7 +987,8 @@ function enterFreeState() {
   setStep(4);
   controls.enabled = true;
   controls.autoRotate = true;
-  controls.autoRotateSpeed = 0.38;
+  controls.autoRotateSpeed = 0;
+  freeStateStartedAt = performance.now();
 }
 
 function restart() {
@@ -996,6 +1012,7 @@ function restart() {
   isBusy = false;
   isFree = false;
   freeMix = 0;
+  freeStateStartedAt = null;
   currentLine = null;
   currentPoints = [];
   currentScreenPoints = [];
@@ -1068,6 +1085,12 @@ function animate(time) {
   }
 
   if (isFree) {
+    const cameraMotionMix = THREE.MathUtils.smootherstep(
+      Math.min(1, (time - freeStateStartedAt) / CAMERA_MOTION_RAMP_MS),
+      0,
+      1,
+    );
+    controls.autoRotateSpeed = CAMERA_AUTO_ROTATE_SPEED * cameraMotionMix;
     freeLines.forEach((line, lineIndex) => {
       line.userData.lengthScale += delta * FREE_LINE_GROWTH_PER_SECOND;
       line.scale.setScalar(line.userData.lengthScale);
