@@ -44,7 +44,7 @@ The production files are generated in `dist/`.
 
 ## Credits
 
-Designed and developed by [Muzaffer Karsli].
+Designed and developed by **[Muzaffer Karsli](https://www.linkedin.com/in/muzaffer-karsli/)**.
 
 Audio:
 
