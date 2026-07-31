@@ -348,7 +348,7 @@ body.is-free .experience::before {
   left: 50%;
   width: min(720px, calc(100vw - 80px));
   height: clamp(170px, 28vh, 270px);
-  border: 1px solid rgba(21, 21, 19, .72);
+  border: 2.4px solid rgba(21, 21, 19, .72);
   background: rgba(233, 228, 218, .08);
   opacity: 0;
   pointer-events: none;
@@ -359,7 +359,7 @@ body.is-free .experience::before {
 .drawing-boundary span {
   position: absolute;
   top: -20px;
-  left: -1px;
+  left: -2.4px;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: .12em;
