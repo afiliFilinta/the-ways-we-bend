@@ -685,7 +685,7 @@ body.is-free #progress-fill {
 
   .finale {
     right: 22px;
-    bottom: 14vh;
+    bottom: calc(14px + 34px + 16px);
     left: auto;
     width: calc(100vw - 44px);
     padding: 14px;
@@ -985,10 +985,21 @@ body.is-free .story-scroll {
   }
 
   .story-prologue {
-    min-height: 950px;
+    min-height: max(780px, 100svh);
+    justify-content: flex-start;
   }
 
   .story-kicker {
+    width: 42%;
+    margin-top: 28px;
+  }
+
+  .story-prologue .story-index {
+    width: 38%;
+    line-height: 1.45;
+  }
+
+  .story-prologue h2 {
     margin-top: auto;
   }
 
@@ -998,11 +1009,11 @@ body.is-free .story-scroll {
   }
 
   .mobile-prologue {
-    top: 5vh;
-    right: -35%;
-    width: 125vw;
-    transform: scale(.72) rotate(-5deg);
-    transform-origin: center;
+    top: 58px;
+    right: -8vw;
+    width: 110vw;
+    transform: scale(.48) rotate(-5deg);
+    transform-origin: top right;
   }
 
   .story-rule {
@@ -1022,8 +1033,13 @@ body.is-free .story-scroll {
   }
 
   .story-nature {
-    min-height: 950px;
-    justify-content: flex-end;
+    min-height: max(780px, 100svh);
+    justify-content: flex-start;
+  }
+
+  .story-nature .story-index {
+    width: 38%;
+    line-height: 1.45;
   }
 
   .story-nature h2 {
@@ -1036,10 +1052,11 @@ body.is-free .story-scroll {
   }
 
   .mobile-nature {
-    top: 5vh;
-    right: -29%;
-    width: 120vw;
-    transform: scale(.72);
+    top: 52px;
+    right: -8vw;
+    width: 108vw;
+    transform: scale(.48);
+    transform-origin: top right;
   }
 
   .story-turn > p {
@@ -1048,7 +1065,13 @@ body.is-free .story-scroll {
   }
 
   .story-end {
-    min-height: 980px;
+    min-height: max(820px, 100svh);
+    justify-content: flex-start;
+  }
+
+  .story-end .story-index {
+    width: 44%;
+    line-height: 1.45;
   }
 
   .story-end h2 {
@@ -1056,10 +1079,11 @@ body.is-free .story-scroll {
   }
 
   .mobile-end {
-    top: 2vh;
-    right: -35%;
-    width: 120vw;
-    transform: scale(.72);
+    top: 48px;
+    right: -8vw;
+    width: 110vw;
+    transform: scale(.48);
+    transform-origin: top right;
   }
 }
 
@@ -1417,6 +1441,12 @@ body.is-free .story-scroll {
 }
 
 @media (max-width: 760px) {
+  .story-scroll .mobile-prologue,
+  .story-scroll .mobile-nature,
+  .story-scroll .mobile-end {
+    position: absolute;
+  }
+
   .story-nav { grid-template-columns: 1fr auto; }
   .story-nav-title { display: none; }
   .story-nav .identity { gap: 10px; }
