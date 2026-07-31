@@ -248,11 +248,61 @@ body.is-free .experience::before {
   letter-spacing: .08em;
   text-transform: uppercase;
   cursor: pointer;
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+
+.story-end > a {
+  isolation: isolate;
+}
+
+.story-end > a::before {
+  position: absolute;
+  z-index: 2;
+  inset: -7px -9px;
+  background: center / 100% 100% no-repeat
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23151513' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath vector-effect='non-scaling-stroke' stroke-width='1.45' d='M2 8 C16 3 31 7 48 4 C67 2 84 7 98 4 C96 28 100 50 97 72 C99 83 96 93 98 96 C76 94 61 99 42 95 C26 98 12 94 3 97 C5 73 1 56 4 37 C1 24 5 15 2 8Z'/%3E%3Cpath vector-effect='non-scaling-stroke' stroke-width='.85' opacity='.68' d='M1 12 C20 5 36 10 55 6 C72 9 88 3 99 9 M96 2 C99 24 95 44 99 64 C95 80 100 91 95 99 M99 92 C81 99 65 93 48 98 C30 94 16 99 1 94 M7 99 C2 78 6 61 2 42 C6 25 1 13 7 2'/%3E%3C/g%3E%3C/svg%3E");
+  content: "";
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  #start:hover {
+    box-shadow: 6px 6px 0 var(--ink);
+    transform: translate(-4px, -4px);
+  }
+
+  #start:hover i {
+    transform: translateX(4px);
+  }
+
+  .story-end > a:hover {
+    transform: translate(2px, -3px) rotate(-1deg);
+  }
+
+  .story-end > a:hover::before {
+    transform: translate(-2px, 1px) rotate(.35deg) scale(1.015);
+  }
+}
+
+#start:active {
+  box-shadow: 2px 2px 0 var(--ink);
+  transform: translate(-1px, -1px);
+}
+
+.story-end > a:active {
+  transform: translateY(1px) rotate(.5deg);
+}
+
+#start:focus-visible,
+.story-end > a:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 10px;
 }
 
 #start i {
   font-size: 26px;
   font-style: normal;
+  transition: transform .18s ease;
 }
 
 .instruction {
@@ -289,6 +339,71 @@ body.is-free .experience::before {
 .instruction small {
   color: rgba(21, 21, 19, .52);
   font-weight: 500;
+}
+
+.drawing-boundary {
+  position: fixed;
+  z-index: 3;
+  top: 54%;
+  left: 50%;
+  width: min(720px, calc(100vw - 80px));
+  height: clamp(170px, 28vh, 270px);
+  border: 1px solid rgba(21, 21, 19, .72);
+  background: rgba(233, 228, 218, .08);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -48%) scale(.98);
+  transition: opacity .45s ease, transform .45s ease, border-radius .55s ease;
+}
+
+.drawing-boundary span {
+  position: absolute;
+  top: -20px;
+  left: -1px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.trace-guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 4px;
+  background: radial-gradient(
+    circle,
+    rgba(36, 86, 164, .78) 0 1.5px,
+    transparent 1.8px
+  ) left center / 10px 4px repeat-x;
+  opacity: 0;
+  transform-origin: center;
+  transition: opacity .4s ease;
+}
+
+.drawing-boundary.has-trace-guide .trace-guide {
+  animation: trace-guide-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes trace-guide-pulse {
+  0%,
+  100% {
+    opacity: .28;
+  }
+
+  45% {
+    opacity: .72;
+  }
+
+  68% {
+    opacity: .46;
+  }
+}
+
+.drawing-boundary.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .verdict {
@@ -562,6 +677,12 @@ body.is-free #progress-fill {
     top: 100px;
   }
 
+  .drawing-boundary {
+    top: 56%;
+    width: calc(100vw - 44px);
+    height: clamp(180px, 32vh, 240px);
+  }
+
   .finale {
     right: 22px;
     bottom: 14vh;
@@ -595,6 +716,11 @@ body.is-free #progress-fill {
 
   .finale.is-condensed .finale-links a {
     opacity: 1;
+    animation: none;
+  }
+
+  .drawing-boundary.has-trace-guide .trace-guide {
+    opacity: .4;
     animation: none;
   }
 }
@@ -803,7 +929,7 @@ body.is-free .story-scroll {
   z-index: 2;
   align-self: flex-start;
   padding: 18px 22px;
-  border: 1px solid;
+  border: 0;
   background: var(--yellow);
   color: inherit;
   font-size: 9px;
@@ -811,6 +937,11 @@ body.is-free .story-scroll {
   letter-spacing: .1em;
   text-decoration: none;
   text-transform: uppercase;
+  transition: transform .2s ease;
+}
+
+.story-end > a::before {
+  transition: transform .2s steps(2, end);
 }
 
 .mobile-prologue {
