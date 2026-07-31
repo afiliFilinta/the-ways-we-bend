@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 
 const sceneHost = document.querySelector('#scene');
 const intro = document.querySelector('#intro');
@@ -87,6 +90,18 @@ const COLORS = {
 
 const PENCIL_AUDIO_URL = './audio/pencil-on-paper.mp3';
 const PENCIL_AUDIO_GAIN = 1.25;
+const DRAWING_LINE_WIDTH = 2.4;
+const FREE_LINE_WIDTH = 1;
+const MIN_FREE_LINE_SCALE = 0.001;
+const FREE_LINE_GROWTH_PER_SECOND = 0.016;
+
+function createLineGeometry(points) {
+  const drawablePoints = points.length === 1 ? [points[0], points[0]] : points;
+  const positions = drawablePoints.flatMap((point) => [point.x, point.y, point.z]);
+  const geometry = new LineGeometry();
+  geometry.setPositions(positions);
+  return geometry;
+}
 
 class PencilAudioEngine {
   constructor(url) {
@@ -483,10 +498,10 @@ function beginLine(event) {
   pointerDownAt = { x: event.clientX, y: event.clientY };
   currentPoints = [point.clone()];
   currentScreenPoints = [{ x: event.clientX, y: event.clientY }];
-  const geometry = new THREE.BufferGeometry().setFromPoints(currentPoints);
-  currentLine = new THREE.Line(geometry, new THREE.LineBasicMaterial({
+  const geometry = createLineGeometry(currentPoints);
+  currentLine = new Line2(geometry, new LineMaterial({
     color: trial === 3 ? COLORS.red : COLORS.ink,
-    linewidth: 2,
+    linewidth: DRAWING_LINE_WIDTH,
   }));
   currentLine.position.z = 0.05 + trial * 0.08;
   drawGroup.add(currentLine);
@@ -507,7 +522,7 @@ function extendLine(event) {
   currentPoints.push(point.clone());
   currentScreenPoints.push({ x: event.clientX, y: event.clientY });
   currentLine.geometry.dispose();
-  currentLine.geometry = new THREE.BufferGeometry().setFromPoints(currentPoints);
+  currentLine.geometry = createLineGeometry(currentPoints);
 }
 
 function finishLine() {
@@ -552,12 +567,12 @@ function straightenCurrentLine() {
     const eased = 1 - Math.pow(1 - raw, 3);
     const positions = source.map((point, index) => point.clone().lerp(targets[index], eased));
     line.geometry.dispose();
-    line.geometry = new THREE.BufferGeometry().setFromPoints(positions);
+    line.geometry = createLineGeometry(raw < 1 ? positions : [first, last]);
 
     if (raw < 1) return true;
     line.material.color.set(evaluation.retryRequired ? COLORS.red : COLORS.ink);
     line.material.transparent = true;
-    line.material.opacity = 0.46;
+    line.material.opacity = 1;
     showVerdict(evaluation);
 
     if (evaluation.retryRequired) {
@@ -850,15 +865,43 @@ function liberateCurrentLine() {
       );
     });
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(positions);
-    const material = new THREE.LineBasicMaterial({
+    const center = new THREE.Box3()
+      .setFromPoints(positions)
+      .getCenter(new THREE.Vector3());
+    const centeredPositions = positions.map((point) => point.clone().sub(center));
+    const geometry = createLineGeometry(centeredPositions);
+    const material = new LineMaterial({
       color: palette[index % palette.length],
+      linewidth: DRAWING_LINE_WIDTH,
       transparent: true,
       opacity: index === 0 ? 1 : 0,
     });
-    const line = new THREE.Line(geometry, material);
-    line.scale.setScalar(index === 0 ? 1 : 0.01);
-    line.userData = { positions, seed, spread, targetScale, targetOpacity };
+    const line = new Line2(geometry, material);
+    line.position.copy(center);
+    line.scale.setScalar(MIN_FREE_LINE_SCALE);
+    const driftDirection = new THREE.Vector3(
+      Math.cos(seed * 1.13),
+      Math.sin(seed * 0.91) * 0.65,
+      Math.sin(seed * 1.47) * 0.8,
+    ).normalize();
+    const crossDirection = new THREE.Vector3(
+      -driftDirection.y,
+      driftDirection.x,
+      Math.cos(seed * 0.77) * 0.4,
+    ).normalize();
+    line.userData = {
+      positions: centeredPositions,
+      basePosition: center.clone(),
+      driftDirection,
+      crossDirection,
+      driftAmplitude: 0.45 + spread * 0.85,
+      driftSpeed: 0.00017 + (index % 5) * 0.000026,
+      seed,
+      spread,
+      targetScale,
+      targetOpacity,
+      lengthScale: MIN_FREE_LINE_SCALE,
+    };
     freeLines.push(line);
     freeGroup.add(line);
   }
@@ -867,19 +910,30 @@ function liberateCurrentLine() {
   animations.push((time) => {
     const raw = Math.min(1, (time - startedAt) / 2300);
     const eased = 1 - Math.pow(1 - raw, 4);
+    const widthMix = THREE.MathUtils.smoothstep(raw, 0, 1);
     freeMix = eased;
     scene.background.lerpColors(new THREE.Color(COLORS.paper), new THREE.Color(COLORS.finalPaper), eased);
     scene.fog.color.copy(scene.background);
 
     freeLines.forEach((line, index) => {
       const delay = Math.min(1, Math.max(0, raw * 1.45 - index * 0.012));
-      const scale = THREE.MathUtils.lerp(0.01, line.userData.targetScale, delay);
-      line.scale.setScalar(scale);
+      const lengthMix = THREE.MathUtils.smoothstep(delay, 0, 1);
+      line.userData.lengthScale = THREE.MathUtils.lerp(
+        MIN_FREE_LINE_SCALE,
+        line.userData.targetScale,
+        lengthMix,
+      );
+      line.scale.setScalar(line.userData.lengthScale);
       line.material.opacity = delay * line.userData.targetOpacity;
+      line.material.linewidth = THREE.MathUtils.lerp(
+        DRAWING_LINE_WIDTH,
+        FREE_LINE_WIDTH,
+        widthMix,
+      );
     });
 
     acceptedLines.forEach((line, index) => {
-      line.material.opacity = THREE.MathUtils.lerp(0.46, 0, eased);
+      line.material.opacity = THREE.MathUtils.lerp(1, 0, eased);
       line.position.y = THREE.MathUtils.lerp(0, 3.4 + index * 1.1, eased);
       line.position.x = THREE.MathUtils.lerp(0, index === 0 ? -1.4 : 1.2, eased);
       line.rotation.z = THREE.MathUtils.lerp(0, index === 0 ? -0.08 : 0.1, eased);
@@ -1015,21 +1069,33 @@ function animate(time) {
 
   if (isFree) {
     freeLines.forEach((line, lineIndex) => {
-      const positions = line.geometry.attributes.position;
+      line.userData.lengthScale += delta * FREE_LINE_GROWTH_PER_SECOND;
+      line.scale.setScalar(line.userData.lengthScale);
+      const driftPhase = time * line.userData.driftSpeed + line.userData.seed;
+      line.position
+        .copy(line.userData.basePosition)
+        .addScaledVector(
+          line.userData.driftDirection,
+          Math.sin(driftPhase) * line.userData.driftAmplitude,
+        )
+        .addScaledVector(
+          line.userData.crossDirection,
+          Math.cos(driftPhase * 0.67) * line.userData.driftAmplitude * 0.55,
+        );
+      line.rotation.x = Math.sin(driftPhase * 0.73) * (0.035 + line.userData.spread * 0.055);
+      line.rotation.y = Math.cos(driftPhase * 0.61) * (0.05 + line.userData.spread * 0.07);
+      line.rotation.z = Math.sin(driftPhase * 0.89) * (0.025 + line.userData.spread * 0.045);
       const originals = line.userData.positions;
-      for (let index = 0; index < positions.count; index += 1) {
+      const positions = new Float32Array(originals.length * 3);
+      for (let index = 0; index < originals.length; index += 1) {
         const original = originals[index];
         const phase = time * .00035 + line.userData.seed + index * .085;
-        positions.setXYZ(
-          index,
-          original.x + Math.sin(phase * 1.1) * .06 * line.userData.spread,
-          original.y + Math.cos(phase * 1.4) * .05 * line.userData.spread,
-          original.z + Math.sin(phase + lineIndex * .17) * .08,
-        );
+        positions[index * 3] = original.x + Math.sin(phase * 1.1) * .06 * line.userData.spread;
+        positions[index * 3 + 1] = original.y + Math.cos(phase * 1.4) * .05 * line.userData.spread;
+        positions[index * 3 + 2] = original.z + Math.sin(phase + lineIndex * .17) * .08;
       }
-      positions.needsUpdate = true;
+      line.geometry.setPositions(positions);
     });
-    freeGroup.rotation.y += delta * .012;
     controls.update();
   }
 
