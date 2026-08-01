@@ -1516,7 +1516,7 @@ body.is-free .story-scroll {
 .attempt-atlas { align-self:center; margin-top:6vh; border-top:1px solid var(--ink); }
 .attempt-row { display:grid; min-height:118px; grid-template-columns:120px minmax(0,1fr) 54px; align-items:center; gap:18px; border-bottom:1px solid var(--ink); font-size:8px; font-weight:700; letter-spacing:.1em; }
 .attempt-row svg { height:94px; }.attempt-row path { stroke-width:1.6; }.attempt-row b { color:var(--red); text-align:right; }
-.attempt-row-free { background:var(--ink); color:var(--paper); }.attempt-row-free > *:first-child { margin-left:12px; }.attempt-row-free path { stroke:var(--red); stroke-width:2.5; }.attempt-row-free b { padding-right:12px; }
+.attempt-row-free { background:var(--ink); color:var(--paper); }.attempt-row-free > *:first-child { margin-left:12px; }.story-atlas .attempt-row-free [data-story-line] { stroke:var(--red); stroke-width:2.5; }.attempt-row-free b { padding-right:12px; }
 .story-atlas h2 { align-self:center; font-size:clamp(55px,7vw,108px); }
 .story-atlas > p { position:absolute; right:7vw; bottom:7vh; width:min(390px,35vw); font:italic clamp(18px,1.7vw,26px)/1.4 Georgia,serif; }
 
