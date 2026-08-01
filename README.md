@@ -46,6 +46,8 @@ The production files are generated in `dist/`.
 
 Designed and developed by **[Muzaffer Karsli](https://www.linkedin.com/in/muzaffer-karsli/)**.
 
+AI-assisted tools were used during parts of the development process.
+
 Audio:
 
 - “Swirl, Pencil, Drawing sound effect” by BeeProductive, used under the
