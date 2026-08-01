@@ -30,6 +30,10 @@ const storyProgress = document.querySelector('#story-progress');
 const storyFirstScore = document.querySelector('#story-first-score');
 const storyDeviationDot = document.querySelector('#story-deviation-dot');
 const storyDeviationLabel = document.querySelector('#story-deviation-label');
+const detailStage = document.querySelector('.detail-stage');
+const detailCallout = document.querySelector('.detail-callout');
+const detailCalloutArrow = document.querySelector('.detail-callout-arrow');
+const detailCalloutArrowPath = document.querySelector('#detail-callout-arrow-path');
 const storyCloserTitle = document.querySelector('#story-closer-title');
 const storyCloserCopy = document.querySelector('#story-closer-copy');
 const storyAttemptsCopy = document.querySelector('#story-attempts-copy');
@@ -37,13 +41,12 @@ const storyTurnTitle = document.querySelector('#story-turn-title');
 const storyTurnCopy = document.querySelector('#story-turn-copy');
 const storyPortraitDate = document.querySelector('#story-portrait-date');
 const printButtons = [...document.querySelectorAll('[data-export-print]')];
-const languageButtons = [...document.querySelectorAll('[data-language-toggle]')];
 
 const TRANSLATIONS = {
   en: {
     metaDescription: 'A small interactive experiment about the beautiful ways we bend.',
     pageTitle: 'The Ways We Bend — A Three.js Experiment',
-    sceneLabel: 'Interactive three-dimensional drawing space', restartLabel: 'Restart the experience', progressLabel: 'Experience progress', languageSwitch: 'Switch language to Turkish',
+    sceneLabel: 'Interactive three-dimensional drawing space', restartLabel: 'Restart the experience', progressLabel: 'Experience progress',
     soundOn: 'SOUND: ON', soundOff: 'SOUND: OFF',
     introKicker: 'A small experiment about all the ways we bend.', introTitle: 'We were taught<br>to draw a <em>straight line.</em>', start: 'Let’s begin',
     instructionFirst: 'Draw a straight line.', hintFirst: 'Hold, move, then let go', hintRelease: 'Let go when it feels finished', hintLonger: 'Give it a little more room', hintRetry: 'Score B or higher to continue',
@@ -71,44 +74,7 @@ const TRANSLATIONS = {
     feedbackDestination: 'Try again. Choose the destination first, then let your hand follow.', feedbackTraceEnd: 'Trace the guide from end to end before letting go.', feedbackTraceInside: 'Keep the entire line inside the frame, then follow the guide.', feedbackTraceElsewhere: 'Follow the guide. A straight line elsewhere does not count.', feedbackTraceCloser: 'Keep your hand closer to the guide and try again.', feedbackMostlyOutside: 'Most of your line fell outside the frame. Stay within the boundary.', feedbackPartOutside: 'Part of your line crossed the frame. Keep the whole line inside.', feedbackAlmostInside: 'Almost there. Keep every part of the line inside the frame.', feedbackExcellent: 'Excellent. Confident, controlled, and beautifully direct.', feedbackGood: 'Good work. Steady, with only a little hesitation.', feedbackPromising: 'Promising. Keep your hand calm and trust the direction.', feedbackSearching: 'You’re searching. Slow down and guide the line with more intention.',
     printSettling: 'Letting the lines settle…', printPreparing: 'Preparing vector print…', printFallback: 'Keep your lines ↓', printError: 'The print could not be prepared on this device. Please try again.',
   },
-  tr: {
-    metaDescription: 'Bükülmenin güzel hâlleri üzerine küçük, etkileşimli bir deney.',
-    pageTitle: 'Bükülme Biçimlerimiz — Bir Three.js Deneyi',
-    sceneLabel: 'Etkileşimli üç boyutlu çizim alanı', restartLabel: 'Deneyimi yeniden başlat', progressLabel: 'Deneyim ilerlemesi', languageSwitch: 'Dili İngilizce olarak değiştir',
-    soundOn: 'SES: AÇIK', soundOff: 'SES: KAPALI',
-    introKicker: 'Bükülmenin tüm hâlleri üzerine küçük bir deney.', introTitle: 'Bize <em>dümdüz bir çizgi</em><br>çizmemiz öğretildi.', start: 'Başlayalım',
-    instructionFirst: 'Düz bir çizgi çiz.', hintFirst: 'Basılı tut, hareket ettir ve bırak', hintRelease: 'Bittiğini hissettiğinde bırak', hintLonger: 'Biraz daha alan kullan', hintRetry: 'Devam etmek için B veya üzeri al',
-    instructionSecond: 'Çerçevenin içine bir çizgi çiz.', hintSecond: 'Çizginin tamamını sınırlar içinde tut', instructionThird: 'Çerçevenin içindeki düz çizginin üzerinden geç.', hintThird: 'Kılavuzu bir uçtan diğerine takip et', instructionFourth: 'Şimdi sana ait hissettiren çizgiyi çiz.', hintFourth: 'İçeride ya da dışarıda — seçim senin',
-    modeReady: 'Seni bekliyor', modeWaiting: 'Çizgini bekliyor', modeWatching: 'Dikkatle izliyor', modeAccepted: 'Kabul edildi', modeRetry: 'B veya üzeri gerekli', modeShifting: 'Bir şeyler değişiyor', modeFree: 'Olmakta özgür',
-    boundaryDraw: 'Bu çerçevenin içine çiz', boundaryTrace: 'Bu çizginin üzerinden geç', verdictPlaceholder: 'Mükemmel kontrol. Kendinden emin, doğrudan bir çizgi.',
-    finaleKicker: 'Hiçbir şey ters gitmedi.', finaleTitle: 'Sen hiçbir zaman<br><em>dümdüz bir çizgi</em> olmak için yaratılmadın.', finaleCopy: 'Kendin olduğun yer, büküldüğün yerlerdi.', continue: 'Devam et ↓', beginAgain: 'Yeniden başla ↺',
-    desktopHelp: 'ÇİZ: BASILI TUT + HAREKET ET · SONRA: SÜRÜKLE / YAKINLAŞTIR', desktopHelpFree: 'SÜRÜKLE / YAKINLAŞTIR · DEVAM ETMEK İÇİN KAYDIR', storyLabel: 'Deneyimin ardındaki hikâye', returnLines: '↑ ÇİZGİLERİNE DÖN',
-    control: 'KONTROL', accepted: 'KABUL EDİLDİ', measureIndex: 'ÖLÇÜ / 01', firstLine: 'Bu senin ilk çizgindi.', measureTitle: 'Ona bir sayı verdiler.<br>Adına <em>kontrol</em> dediler.', keepScrolling: 'Kaydırmaya devam et ↓',
-    closerIndex: 'YAKINDAN BAK / 02', directionChanged: 'Burada yön değiştirdin.', closerTitle: 'Ne kadar yakından bakarsak,<br>o kadar az <em>hata</em><br>gibi görünüyor.', closerCopy: 'Bir titreme. Bir duraklama. Bir düzeltme.<br>Gürültü değil — burada olduğunun kanıtı.', deviation: 'KUSURSUZDAN {value} PX UZAKTA',
-    closerPreciseTitle: 'Kurala yakın kaldın.<br>Bu kesinlik <em>senin.</em>', closerPreciseCopy: 'Elin bir yön seçti ve onu korudu.<br>Kontrol izini silmedi; yalnızca daha sessiz kıldı.',
-    closerSteadyTitle: 'Çizgin büküldü,<br>ama yönünü hiç<br><em>kaybetmedi.</em>', closerSteadyCopy: 'Küçük bir dönüş hata değildir.<br>Ölçünün içinde kalırken elinin yolunu bulma biçimidir.',
-    closerSearchingTitle: 'Çizginin yolunu<br>bulmasına yer<br><em>bıraktın.</em>', closerSearchingCopy: 'Dönüşler de niyetin de görünür.<br>Bir yere varana kadar çizginin yanında kaldın.',
-    attemptsIndex: 'DENEMELER / 03', attemptDirect: '01 / DOĞRUDAN', attemptContained: '02 / SINIRLI', attemptTraced: '03 / ÜZERİNDEN', attemptYours: '04 / SENİNKİ', unscored: 'PUANSIZ', attemptsTitle: 'Dört yönerge.<br><em>Senin</em> dört hâlin.', attemptsCopy: 'Hiçbir deneme bir öncekini tekrarlamadı. Bu fark başarısızlık değil; imzandır.',
-    attemptsConsistentCopy: 'Yönergeler değişti; elinin ritmi değişmedi. Tekrar boşluk değil — elinin bildiği bir seçimdir.',
-    attemptsEvolvingCopy: 'Her çizgi bir öncekinden biraz ayrıldı. Elin kuralı yalnızca tekrarlamadı; onunla pazarlık etti.',
-    attemptsVariedCopy: 'Bu dört çizgi aynı biçimde hareket etmiyor. Bu tutarsızlık değil — aynı elin dört farklı sınıra verdiği cevap.',
-    turnIndex: 'DÖNÜŞ / 04', turnCopy: 'Kural dümdüz kaldı.<br>Sen kalmak zorunda değildin.', turnTitle: 'Çizgin sistemi başarısızlığa<br>uğratmadı. Sistemi<br><em>büktü.</em>',
-    turnInsideRepeatCopy: 'Sınırların içinde kaldın ve elinin zaten bildiği bir hareketi tekrarladın.', turnInsideRepeatTitle: 'Sınırı aşmadın.<br>Yine de içeride olan<br><em>senindi.</em>',
-    turnInsidePatientCopy: 'Sınırların içinde kaldın ve her dönüşe ihtiyaç duyduğu zamanı verdin.', turnInsidePatientTitle: 'Çerçeve alanı tuttu.<br>İçinde nasıl ilerleyeceğine<br><em>sen karar verdin.</em>',
-    turnInsideBendCopy: 'Çerçevenin içinde kaldın; ama onun hareketini düzleştirmesine izin vermedin.', turnInsideBendTitle: 'Sınırı korudun.<br><em>İçerinin</em> ne demek<br>olduğunu değiştirdin.',
-    turnCrossingCopy: 'Çizginin bir kısmı içeride kaldı, bir kısmı dışarı çıktı. Sınırı gördün ve ona nerede cevap vereceğini seçtin.', turnCrossingTitle: 'Sınırı yok saymadın.<br>Nerede açılacağına<br><em>sen karar verdin.</em>',
-    turnOutsideCopy: 'Çizgin zamanının çoğunu çerçevenin dışında geçirdi. Kural görünür kaldı; yalnızca senin yerine karar vermeyi bıraktı.', turnOutsideTitle: 'Sınır yerinde kaldı.<br>Yönün yalnızca<br><em>senindi.</em>',
-    portraitIndex: 'PORTREN / 05', portraitDrawn: 'SENİN ELİNLE ÇİZİLDİ', portraitDevice: 'BU CİHAZDA', portraitTitle: 'Bu, düz bir çizgi çizmeyi<br>nasıl başaramadığın değil.', portraitCopy: 'Bu, nasıl hareket ettiğin.', savePrint: 'Çizgini al ↓', drawAgain: 'Yeniden çiz',
-    feedbackDestination: 'Tekrar dene. Önce varacağın yeri seç, sonra elinin onu takip etmesine izin ver.', feedbackTraceEnd: 'Bırakmadan önce kılavuzu bir uçtan diğerine takip et.', feedbackTraceInside: 'Çizginin tamamını çerçevede tut, sonra kılavuzu takip et.', feedbackTraceElsewhere: 'Kılavuzu takip et. Başka yerdeki düz çizgi sayılmaz.', feedbackTraceCloser: 'Elini kılavuza daha yakın tutup tekrar dene.', feedbackMostlyOutside: 'Çizginin çoğu çerçevenin dışında kaldı. Sınırların içinde kal.', feedbackPartOutside: 'Çizginin bir kısmı çerçeveyi aştı. Tamamını içeride tut.', feedbackAlmostInside: 'Neredeyse oldu. Çizginin her parçasını çerçevenin içinde tut.', feedbackExcellent: 'Mükemmel. Kendinden emin, kontrollü ve güzelce doğrudan.', feedbackGood: 'İyi iş. Kararlı, yalnızca biraz tereddütlü.', feedbackPromising: 'Umut verici. Elini sakin tut ve yönüne güven.', feedbackSearching: 'Arıyorsun. Yavaşla ve çizgiyi daha bilinçli yönlendir.',
-    printSettling: 'Çizgilerin yerleşmesi bekleniyor…', printPreparing: 'Vektör baskı hazırlanıyor…', printFallback: 'Çizgini al ↓', printError: 'Baskı bu cihazda hazırlanamadı. Lütfen tekrar dene.',
-  },
 };
-
-const supportedLanguages = Object.keys(TRANSLATIONS);
-const savedLanguage = localStorage.getItem('language');
-let currentLanguage = supportedLanguages.includes(savedLanguage)
-  ? savedLanguage
-  : (navigator.language.toLowerCase().startsWith('tr') ? 'tr' : 'en');
 
 const MIN_PASSING_SCORE = 65;
 const MIN_BOUNDARY_PASS_RATIO = 0.999;
@@ -132,7 +98,7 @@ let storyNarrativeKeys = {
   turnCopy: 'turnCopy',
 };
 function t(key) {
-  return TRANSLATIONS[currentLanguage][key] ?? TRANSLATIONS.en[key] ?? key;
+  return TRANSLATIONS.en[key] ?? key;
 }
 
 function formatTranslation(key, values = {}) {
@@ -143,11 +109,11 @@ function formatTranslation(key, values = {}) {
 }
 
 function updatePortraitDate() {
-  storyPortraitDate.textContent = new Intl.DateTimeFormat(currentLanguage, {
+  storyPortraitDate.textContent = new Intl.DateTimeFormat('en', {
     month: 'short',
     day: '2-digit',
     year: 'numeric',
-  }).format(new Date()).toLocaleUpperCase(currentLanguage);
+  }).format(new Date()).toLocaleUpperCase('en');
 }
 
 function renderStoryNarrative() {
@@ -158,12 +124,8 @@ function renderStoryNarrative() {
   storyTurnCopy.innerHTML = t(storyNarrativeKeys.turnCopy);
 }
 
-function applyLanguage(language, persist = true) {
-  if (!supportedLanguages.includes(language)) return;
-  currentLanguage = language;
-  document.documentElement.lang = language;
+function applyCopy() {
   document.title = t('pageTitle');
-  if (persist) localStorage.setItem('language', language);
 
   document.querySelectorAll('[data-i18n]').forEach((element) => {
     element.textContent = t(element.dataset.i18n);
@@ -178,10 +140,6 @@ function applyLanguage(language, persist = true) {
     element.setAttribute('content', t(element.dataset.i18nContent));
   });
 
-  languageButtons.forEach((button) => {
-    button.textContent = language.toLocaleUpperCase('en');
-    button.setAttribute('aria-label', t('languageSwitch'));
-  });
   soundButtons.forEach((button) => {
     if (!button.hasAttribute('data-compact-control')) {
       button.textContent = t(audioOn ? 'soundOn' : 'soundOff');
@@ -567,6 +525,7 @@ function resize() {
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
   positionTraceGuide();
+  updateDetailCalloutArrow();
 }
 
 function setStep(value) {
@@ -1110,6 +1069,60 @@ function makeStoryGeometry(points) {
   };
 }
 
+function updateDetailCalloutArrow() {
+  const pointX = Number.parseFloat(storyDeviationDot.getAttribute('cx'));
+  const pointY = Number.parseFloat(storyDeviationDot.getAttribute('cy'));
+  if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) return;
+
+  const stageBounds = detailStage.getBoundingClientRect();
+  const calloutBounds = detailCallout.getBoundingClientRect();
+  if (!stageBounds.width || !stageBounds.height) return;
+
+  const originX = calloutBounds.left - stageBounds.left + 15;
+  const originY = calloutBounds.bottom - stageBounds.top;
+  const targetX = pointX / 1000 * stageBounds.width;
+  const targetY = pointY / 600 * stageBounds.height;
+  const deltaX = targetX - originX;
+  const deltaY = targetY - originY;
+  const distance = Math.hypot(deltaX, deltaY);
+  if (distance < 1) return;
+
+  const directionX = deltaX / distance;
+  const directionY = deltaY / distance;
+  const normalX = -directionY;
+  const normalY = directionX;
+  const arrowGap = 30;
+  const endX = targetX - directionX * arrowGap;
+  const endY = targetY - directionY * arrowGap;
+  const routeX = endX - originX;
+  const routeY = endY - originY;
+  const points = [
+    { x: originX, y: originY },
+    { x: originX + routeX * 0.24 + normalX * 16, y: originY + routeY * 0.24 + normalY * 16 },
+    { x: originX + routeX * 0.5 - normalX * 20, y: originY + routeY * 0.5 - normalY * 20 },
+    { x: originX + routeX * 0.76 + normalX * 10, y: originY + routeY * 0.76 + normalY * 10 },
+    { x: endX, y: endY },
+  ];
+
+  let path = `M${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const previous = points[Math.max(0, index - 1)];
+    const current = points[index];
+    const next = points[index + 1];
+    const afterNext = points[Math.min(points.length - 1, index + 2)];
+    const controlOneX = current.x + (next.x - previous.x) / 6;
+    const controlOneY = current.y + (next.y - previous.y) / 6;
+    const controlTwoX = next.x - (afterNext.x - current.x) / 6;
+    const controlTwoY = next.y - (afterNext.y - current.y) / 6;
+    path += ` C${controlOneX.toFixed(1)} ${controlOneY.toFixed(1)}`
+      + ` ${controlTwoX.toFixed(1)} ${controlTwoY.toFixed(1)}`
+      + ` ${next.x.toFixed(1)} ${next.y.toFixed(1)}`;
+  }
+
+  detailCalloutArrow.setAttribute('viewBox', `0 0 ${stageBounds.width} ${stageBounds.height}`);
+  detailCalloutArrowPath.setAttribute('d', path);
+}
+
 function chooseStoryNarrative() {
   const firstScore = storyLines[0]?.score ?? 0;
   let closerTitle = 'closerSearchingTitle';
@@ -1188,6 +1201,7 @@ function updateStoryArtifacts() {
       storyFirstScore.textContent = line.score ?? '—';
       storyDeviationDot.setAttribute('cx', geometry.maximumDeviation.point.x.toFixed(1));
       storyDeviationDot.setAttribute('cy', geometry.maximumDeviation.point.y.toFixed(1));
+      updateDetailCalloutArrow();
       storyDeviationValue = Math.max(1, Math.round(geometry.maximumDeviation.distance / 3));
       storyDeviationLabel.textContent = formatTranslation('deviation', { value: storyDeviationValue });
     }
@@ -1731,9 +1745,6 @@ restartButton.addEventListener('click', restart);
 returnToSceneLink.addEventListener('click', returnToScene);
 restartExperienceLink.addEventListener('click', restartFromStory);
 soundButtons.forEach((button) => button.addEventListener('click', toggleSound));
-languageButtons.forEach((button) => {
-  button.addEventListener('click', () => applyLanguage(currentLanguage === 'en' ? 'tr' : 'en'));
-});
 printButtons.forEach((button) => button.addEventListener('click', exportPrintPdf));
 renderer.domElement.addEventListener('pointerdown', beginLine);
 renderer.domElement.addEventListener('pointermove', extendLine);
@@ -1743,5 +1754,5 @@ window.addEventListener('resize', resize);
 window.addEventListener('scroll', updateStoryProgress, { passive: true });
 
 resize();
-applyLanguage(currentLanguage, false);
+applyCopy();
 renderer.setAnimationLoop(animate);

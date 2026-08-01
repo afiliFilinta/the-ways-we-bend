@@ -173,47 +173,22 @@ body.is-story-reading .header-actions {
   pointer-events: none;
 }
 
-.language-switcher {
-  display: flex;
-}
-
-.header-actions .language-switcher {
-  position: relative;
-}
-
-.header-actions .language-switcher::after {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  width: 1px;
-  height: 24px;
-  background: currentColor;
-  content: "";
-  opacity: .65;
-  pointer-events: none;
-  transform: translateY(-50%);
-}
-
-.language-switcher button {
+.language-indicator {
+  display: grid;
   width: 52px;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  place-items: center;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: .08em;
-  cursor: pointer;
 }
 
-.language-switcher button:focus-visible {
-  position: relative;
-  z-index: 1;
-  outline: 2px solid var(--red);
-  outline-offset: -3px;
-}
-
-.language-switcher + .sound-toggle {
-  border-left: 0;
+.control-separator {
+  width: 1px;
+  height: 24px;
+  align-self: center;
+  flex: none;
+  background: currentColor;
+  opacity: .65;
 }
 
 .sound-toggle {
@@ -723,11 +698,6 @@ body.is-free .sound-toggle {
   border-color: rgba(21, 21, 19, .65);
 }
 
-body.is-free .language-switcher,
-body.is-free .language-switcher button {
-  border-color: rgba(21, 21, 19, .65);
-}
-
 body.is-free .progress i {
   background: rgba(21, 21, 19, .22);
 }
@@ -757,7 +727,7 @@ body.is-free #progress-fill {
     width: 42px;
   }
 
-  .language-switcher button {
+  .header-actions .language-indicator {
     width: 42px;
   }
 
@@ -887,11 +857,12 @@ body.is-free .story-scroll {
 .story-controls {
   gap: 14px;
   padding-inline: 16px;
-  border-left: 1px solid rgba(21, 21, 19, .65);
 }
 
-.story-controls .language-switcher,
-.story-controls .language-switcher button,
+.story-controls .language-indicator {
+  width: auto;
+}
+
 .story-controls .sound-toggle {
   width: auto;
   padding: 0;
@@ -936,12 +907,10 @@ body.is-free .story-scroll {
   display: block;
 }
 
-.story-controls .language-switcher button:hover,
 .story-controls .sound-toggle:hover {
   color: var(--red);
 }
 
-.story-controls .language-switcher button:focus-visible,
 .story-controls .sound-toggle:focus-visible {
   outline-offset: 4px;
 }
@@ -1726,8 +1695,10 @@ body.is-free .story-scroll {
 .story-detail .detail-ghost { stroke:rgba(233,228,218,.25); }
 #story-deviation-dot { fill:var(--red); opacity:0; transform-box:fill-box; transform-origin:center; transform:scale(0); transition:opacity .4s 1.25s ease,transform .4s 1.25s ease; }
 .story-detail.is-in-view #story-deviation-dot { opacity:1; transform:scale(1); }
-.detail-callout { position:absolute; top:20%; right:2%; padding:7px 9px; background:var(--red); color:var(--paper); font:700 8px/1 sans-serif; letter-spacing:.09em; text-transform:uppercase; }
-.detail-callout i { position:absolute; top:100%; left:15px; width:1px; height:16vh; background:var(--red); transform:rotate(25deg); transform-origin:top; }
+.detail-callout-arrow { position:absolute; z-index:1; inset:0; overflow:visible; pointer-events:none; }
+.detail-callout-arrow > path { fill:none; stroke:var(--red); stroke-width:1.35; vector-effect:non-scaling-stroke; }
+.detail-callout-arrow marker path { fill:var(--red); stroke:none; }
+.detail-callout { position:absolute; top:20%; right:2%; padding:7px 9px; border-radius:3px 2px 4px 2px; background:var(--red); color:var(--paper); font:700 8px/1 sans-serif; letter-spacing:.09em; text-transform:uppercase; }
 .detail-measure { position:absolute; bottom:4%; left:2%; color:var(--red); font-size:8px; font-weight:700; letter-spacing:.12em; }
 .story-detail h2 { max-width:1050px; margin-top:-3vh; }.story-detail h2 em { color:var(--red); }
 .story-detail > p { width:min(380px,40vw); margin:5vh 3vw 0 auto; font:italic clamp(18px,2vw,27px)/1.35 Georgia,serif; }
