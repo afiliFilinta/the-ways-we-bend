@@ -1194,6 +1194,37 @@ body.is-free .story-scroll {
   transition: transform .2s steps(2, end);
 }
 
+.story-social-links {
+  position: relative;
+  z-index: 2;
+  width: fit-content;
+  height: auto;
+  align-self: flex-start;
+  gap: 5px;
+  margin-top: 5vh;
+  padding: 10px 0 0;
+  border-top: 1px solid rgba(21, 21, 19, .45);
+  border-left: 0;
+}
+
+.story-social-links > span {
+  margin-right: 6px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.story-panel .story-social-links svg {
+  width: 14px;
+  height: 14px;
+  overflow: visible;
+}
+
+.story-panel .story-social-links svg path {
+  fill: currentColor;
+  vector-effect: none;
+}
+
 .print-action-large {
   min-height: auto;
 }
@@ -1348,6 +1379,10 @@ body.is-free .story-scroll {
 
   .story-end h2 {
     margin-top: auto;
+  }
+
+  .story-social-links {
+    margin-top: 34px;
   }
 
   .mobile-end {
