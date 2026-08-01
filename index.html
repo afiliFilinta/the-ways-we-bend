@@ -4,46 +4,55 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#e9e4da">
-  <meta name="description" content="A small interactive experiment about the beautiful ways we bend.">
+  <meta name="description" content="A small interactive experiment about the beautiful ways we bend." data-i18n-content="metaDescription">
   <title>The Ways We Bend — A Three.js Experiment</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <main class="experience">
-    <div id="scene" aria-label="Interactive three-dimensional drawing space"></div>
+    <div id="scene" aria-label="Interactive three-dimensional drawing space" data-i18n-aria-label="sceneLabel"></div>
 
     <header class="topbar">
-      <a href="./" class="identity" aria-label="Restart the experience">
-        <span>A/02</span>
+      <a href="./" class="identity" aria-label="Restart the experience" data-i18n-aria-label="restartLabel">
+        <span>A/01</span>
         <strong>THE WAYS WE BEND</strong>
       </a>
-      <div class="progress" aria-label="Experience progress">
+      <div class="progress" aria-label="Experience progress" data-i18n-aria-label="progressLabel">
         <span id="step">00</span>
         <i><b id="progress-fill"></b></i>
         <span>04</span>
       </div>
       <div class="header-actions">
-        <button id="sound" type="button" aria-pressed="false">SOUND: OFF</button>
+        <div class="language-switcher">
+          <button id="language-toggle" type="button" data-language-toggle aria-label="Switch language to Turkish">EN</button>
+        </div>
+        <button id="sound" class="sound-toggle compact-sound-toggle" type="button" data-sound-toggle data-compact-control aria-pressed="false" aria-label="SOUND: OFF">
+          <svg class="sound-icon sound-icon-off" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3 8h3l4-3v10l-4-3H3zM14 7l4 6M18 7l-4 6"></path>
+          </svg>
+          <svg class="sound-icon sound-icon-on" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3 8h3l4-3v10l-4-3H3zM13 7.5c1.2 1.4 1.2 3.6 0 5M15.5 5.5c2.5 2.5 2.5 6.5 0 9"></path>
+          </svg>
+        </button>
       </div>
     </header>
 
     <section id="intro" class="intro">
-      <p>A small experiment about all the ways we bend.</p>
-      <h1>We were taught<br>to draw a <em>straight line.</em></h1>
+      <p data-i18n="introKicker">A small experiment about all the ways we bend.</p>
+      <h1 data-i18n-html="introTitle">We were taught<br>to draw a <em>straight line.</em></h1>
       <button id="start" type="button">
-        <span>Let’s begin</span>
+        <span data-i18n="start">Let’s begin</span>
         <i>→</i>
       </button>
     </section>
 
     <section id="instruction" class="instruction" aria-live="polite">
-      <span id="instruction-index">01 / 04</span>
       <p id="instruction-copy">Draw a straight line.</p>
       <small id="instruction-hint">Hold, move, then let go</small>
     </section>
 
     <div id="drawing-boundary" class="drawing-boundary" aria-hidden="true">
-      <span id="drawing-boundary-label">Draw inside this frame</span>
+      <span id="drawing-boundary-label" data-i18n="boundaryDraw">Draw inside this frame</span>
       <i id="trace-guide" class="trace-guide" aria-hidden="true"></i>
     </div>
 
@@ -51,35 +60,50 @@
       <span id="verdict-grade" class="verdict-mark">A</span>
       <div class="verdict-copy">
         <strong id="verdict-score">90 / 100</strong>
-        <p id="verdict-copy">Excellent control. A confident, direct line.</p>
+        <p id="verdict-copy" data-i18n="verdictPlaceholder">Excellent control. A confident, direct line.</p>
       </div>
     </div>
 
     <section id="finale" class="finale">
       <div class="finale-opening">
-        <p>Nothing went wrong.</p>
-        <h2>You were never meant<br>to be <em>a straight line.</em></h2>
+        <p data-i18n="finaleKicker">Nothing went wrong.</p>
+        <h2 data-i18n-html="finaleTitle">You were never meant<br>to be <em>a straight line.</em></h2>
       </div>
       <div class="finale-actions">
-        <span>The bends are where you became yourself.</span>
+        <span data-i18n="finaleCopy">The bends are where you became yourself.</span>
         <div class="finale-links">
-          <a href="#story">Continue ↓</a>
-          <button id="restart" type="button">Begin again ↺</button>
+          <a href="#story" data-i18n="continue">Continue ↓</a>
+          <button id="restart" type="button" data-i18n="beginAgain">Begin again ↺</button>
         </div>
       </div>
     </section>
 
     <footer>
       <span id="mode">Waiting for you</span>
-      <span class="desktop-help">DRAW: HOLD + MOVE &nbsp;·&nbsp; LATER: DRAG / ZOOM</span>
+      <span class="desktop-help" data-i18n="desktopHelp">DRAW: HOLD + MOVE · LATER: DRAG / ZOOM</span>
     </footer>
   </main>
 
-  <section id="story" class="story-scroll" aria-label="The story behind the experience">
+  <section id="story" class="story-scroll" aria-label="The story behind the experience" data-i18n-aria-label="storyLabel">
     <header class="story-rail">
-      <span>A/02 — THE WAYS WE BEND</span>
+      <span>A/01 — THE WAYS WE BEND</span>
       <i aria-hidden="true"><b id="story-progress"></b></i>
-      <a href="#scene" data-return-to-scene>↑ RETURN TO YOUR LINES</a>
+      <div class="story-rail-actions">
+        <div class="story-controls">
+          <div class="language-switcher">
+            <button type="button" data-language-toggle data-compact-control aria-label="Switch language to Turkish">EN</button>
+          </div>
+          <button class="sound-toggle compact-sound-toggle" type="button" data-sound-toggle data-compact-control aria-pressed="false" aria-label="SOUND: OFF">
+            <svg class="sound-icon sound-icon-off" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M3 8h3l4-3v10l-4-3H3zM14 7l4 6M18 7l-4 6"></path>
+            </svg>
+            <svg class="sound-icon sound-icon-on" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M3 8h3l4-3v10l-4-3H3zM13 7.5c1.2 1.4 1.2 3.6 0 5M15.5 5.5c2.5 2.5 2.5 6.5 0 9"></path>
+            </svg>
+          </button>
+        </div>
+        <a href="#scene" data-return-to-scene data-i18n="returnLines">↑ RETURN TO YOUR LINES</a>
+      </div>
     </header>
 
     <section class="story-panel story-prologue" data-story-scene="measure">
@@ -93,56 +117,58 @@
         <span class="specimen-start">A</span>
         <span class="specimen-end">B</span>
         <div class="score-stamp">
-          <small>CONTROL</small>
           <strong id="story-first-score">—</strong>
-          <span>ACCEPTED</span>
+          <span data-i18n="accepted">ACCEPTED</span>
         </div>
       </div>
-      <span class="story-index">THE MEASURE / 01</span>
-      <p class="story-kicker">This was your first line.</p>
-      <h2>They gave it a number.<br>They called it <em>control.</em></h2>
-      <small>Keep scrolling ↓</small>
+      <span class="story-index" data-i18n="measureIndex">THE MEASURE / 01</span>
+      <p class="story-kicker" data-i18n="firstLine">This was your first line.</p>
+      <h2 data-i18n-html="measureTitle">They gave it a number.<br>They called it <em>control.</em></h2>
+      <small class="story-scroll-prompt" data-i18n="keepScrolling">Keep scrolling ↓</small>
     </section>
 
     <section class="story-panel story-detail" data-story-scene="detail">
-      <span class="story-index">LOOK CLOSER / 02</span>
+      <span class="story-index" data-i18n="closerIndex">LOOK CLOSER / 02</span>
       <div class="detail-stage" aria-hidden="true">
         <svg viewBox="0 0 1000 600" preserveAspectRatio="none">
           <path class="detail-ghost" data-story-ideal="0"></path>
           <path class="story-user-line" data-story-line="0"></path>
           <circle id="story-deviation-dot" r="9"></circle>
         </svg>
-        <span class="detail-callout"><i></i>You changed direction here.</span>
+        <span class="detail-callout"><i></i><span data-i18n="directionChanged">You changed direction here.</span></span>
         <span class="detail-measure" id="story-deviation-label">— PX FROM PERFECT</span>
       </div>
-      <h2>The closer we look,<br>the less it looks<br>like a <em>mistake.</em></h2>
-      <p>A tremor. A pause. A correction.<br>Not noise — evidence that you were here.</p>
+      <h2 id="story-closer-title" data-i18n-html="closerTitle">The closer we look,<br>the less it looks<br>like a <em>mistake.</em></h2>
+      <p id="story-closer-copy" data-i18n-html="closerCopy">A tremor. A pause. A correction.<br>Not noise — evidence that you were here.</p>
+      <small class="story-scroll-prompt" data-i18n="keepScrolling">Keep scrolling ↓</small>
     </section>
 
     <section class="story-panel story-atlas" data-story-scene="attempts">
-      <span class="story-index">THE ATTEMPTS / 03</span>
+      <span class="story-index" data-i18n="attemptsIndex">THE ATTEMPTS / 03</span>
       <div class="attempt-atlas" aria-hidden="true">
-        <div class="attempt-row"><span>01 / DIRECT</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="0"></path></svg><b data-story-score="0">—</b></div>
-        <div class="attempt-row"><span>02 / CONTAINED</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="1"></path></svg><b data-story-score="1">—</b></div>
-        <div class="attempt-row"><span>03 / TRACED</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="2"></path></svg><b data-story-score="2">—</b></div>
-        <div class="attempt-row attempt-row-free"><span>04 / YOURS</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="3"></path></svg><b>UNSCORED</b></div>
+        <div class="attempt-row"><span data-i18n="attemptDirect">01 / DIRECT</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="0"></path></svg><b data-story-score="0">—</b></div>
+        <div class="attempt-row"><span data-i18n="attemptContained">02 / CONTAINED</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="1"></path></svg><b data-story-score="1">—</b></div>
+        <div class="attempt-row"><span data-i18n="attemptTraced">03 / TRACED</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="2"></path></svg><b data-story-score="2">—</b></div>
+        <div class="attempt-row attempt-row-free"><span data-i18n="attemptYours">04 / YOURS</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="3"></path></svg><b data-i18n="unscored">UNSCORED</b></div>
       </div>
-      <h2>Four instructions.<br>Four versions of <em>you.</em></h2>
-      <p>No attempt repeated the one before it. That difference is not failure. It is authorship.</p>
+      <h2 data-i18n-html="attemptsTitle">Four instructions.<br>Four versions of <em>you.</em></h2>
+      <p id="story-attempts-copy" data-i18n="attemptsCopy">No attempt repeated the one before it. That difference is not failure. It is authorship.</p>
+      <small class="story-scroll-prompt" data-i18n="keepScrolling">Keep scrolling ↓</small>
     </section>
 
     <section class="story-panel story-turn" data-story-scene="bend">
-      <span class="story-index">THE TURN / 04</span>
+      <span class="story-index" data-i18n="turnIndex">THE TURN / 04</span>
       <div class="bending-grid" aria-hidden="true">
         <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
         <svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="3"></path></svg>
       </div>
-      <p>The rule stayed straight.<br>You did not have to.</p>
-      <h2>Your line did not fail<br>the system. It made<br>the system <em>bend.</em></h2>
+      <p id="story-turn-copy" data-i18n-html="turnCopy">The rule stayed straight.<br>You did not have to.</p>
+      <h2 id="story-turn-title" data-i18n-html="turnTitle">Your line did not fail<br>the system. It made<br>the system <em>bend.</em></h2>
+      <small class="story-scroll-prompt" data-i18n="keepScrolling">Keep scrolling ↓</small>
     </section>
 
     <section class="story-panel story-end" data-story-scene="portrait">
-      <span class="story-index">YOUR PORTRAIT / 05</span>
+      <span class="story-index" data-i18n="portraitIndex">YOUR PORTRAIT / 05</span>
       <div class="line-portrait" aria-hidden="true">
         <svg viewBox="0 0 1000 600" preserveAspectRatio="none">
           <path data-story-line="0"></path>
@@ -150,13 +176,13 @@
           <path data-story-line="2"></path>
           <path class="portrait-free" data-story-line="3"></path>
         </svg>
-        <span>DRAWN BY YOUR HAND<br>ON THIS DEVICE<br><b id="story-portrait-date">TODAY</b></span>
+        <span><span data-i18n="portraitDrawn">DRAWN BY YOUR HAND</span><br><span data-i18n="portraitDevice">ON THIS DEVICE</span><br><b id="story-portrait-date">TODAY</b></span>
       </div>
-      <h2>This is not how you failed<br>to draw a straight line.</h2>
-      <p>This is how you moved.</p>
+      <h2 data-i18n-html="portraitTitle">This is not how you failed<br>to draw a straight line.</h2>
+      <p data-i18n="portraitCopy">This is how you moved.</p>
       <div class="story-end-actions">
-        <button class="print-action print-action-large" type="button" data-export-print>Save your A3 print as PDF ↓</button>
-        <a href="#scene" data-restart-experience>Draw yours again</a>
+        <button class="print-action print-action-large" type="button" data-export-print data-i18n="savePrint">Keep your lines ↓</button>
+        <a href="#scene" data-restart-experience data-i18n="drawAgain">Draw yours again</a>
       </div>
     </section>
 

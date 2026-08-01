@@ -8,7 +8,6 @@ const sceneHost = document.querySelector('#scene');
 const intro = document.querySelector('#intro');
 const startButton = document.querySelector('#start');
 const instruction = document.querySelector('#instruction');
-const instructionIndex = document.querySelector('#instruction-index');
 const instructionCopy = document.querySelector('#instruction-copy');
 const instructionHint = document.querySelector('#instruction-hint');
 const drawingBoundary = document.querySelector('#drawing-boundary');
@@ -23,7 +22,7 @@ const restartButton = document.querySelector('#restart');
 const stepLabel = document.querySelector('#step');
 const progressFill = document.querySelector('#progress-fill');
 const modeLabel = document.querySelector('#mode');
-const soundButton = document.querySelector('#sound');
+const soundButtons = [...document.querySelectorAll('[data-sound-toggle]')];
 const audio = document.querySelector('#audio');
 const returnToSceneLink = document.querySelector('[data-return-to-scene]');
 const restartExperienceLink = document.querySelector('[data-restart-experience]');
@@ -31,31 +30,85 @@ const storyProgress = document.querySelector('#story-progress');
 const storyFirstScore = document.querySelector('#story-first-score');
 const storyDeviationDot = document.querySelector('#story-deviation-dot');
 const storyDeviationLabel = document.querySelector('#story-deviation-label');
+const storyCloserTitle = document.querySelector('#story-closer-title');
+const storyCloserCopy = document.querySelector('#story-closer-copy');
+const storyAttemptsCopy = document.querySelector('#story-attempts-copy');
+const storyTurnTitle = document.querySelector('#story-turn-title');
+const storyTurnCopy = document.querySelector('#story-turn-copy');
 const storyPortraitDate = document.querySelector('#story-portrait-date');
 const printButtons = [...document.querySelectorAll('[data-export-print]')];
+const languageButtons = [...document.querySelectorAll('[data-language-toggle]')];
 
-const COPY = {
-  soundOn: 'SOUND: ON',
-  soundOff: 'SOUND: OFF',
-  instructionFirst: 'Draw a straight line.',
-  hintFirst: 'Hold, move, then let go',
-  hintRelease: 'Let go when it feels finished',
-  hintLonger: 'Give it a little more room',
-  hintRetry: 'Score B or higher to continue',
-  instructionSecond: 'Draw a line inside the frame.',
-  hintSecond: 'Keep the whole line within the boundary',
-  instructionThird: 'Trace the straight line inside the frame.',
-  hintThird: 'Follow the guide from end to end',
-  instructionFourth: 'Now draw the line that feels like yours.',
-  hintFourth: 'Inside or outside — it’s your choice',
-  modeReady: 'Waiting for you',
-  modeWaiting: 'Waiting for your line',
-  modeWatching: 'Watching closely',
-  modeAccepted: 'Accepted',
-  modeRetry: 'B or higher required',
-  modeShifting: 'Something is shifting',
-  modeFree: 'Free to become',
+const TRANSLATIONS = {
+  en: {
+    metaDescription: 'A small interactive experiment about the beautiful ways we bend.',
+    pageTitle: 'The Ways We Bend — A Three.js Experiment',
+    sceneLabel: 'Interactive three-dimensional drawing space', restartLabel: 'Restart the experience', progressLabel: 'Experience progress', languageSwitch: 'Switch language to Turkish',
+    soundOn: 'SOUND: ON', soundOff: 'SOUND: OFF',
+    introKicker: 'A small experiment about all the ways we bend.', introTitle: 'We were taught<br>to draw a <em>straight line.</em>', start: 'Let’s begin',
+    instructionFirst: 'Draw a straight line.', hintFirst: 'Hold, move, then let go', hintRelease: 'Let go when it feels finished', hintLonger: 'Give it a little more room', hintRetry: 'Score B or higher to continue',
+    instructionSecond: 'Draw a line inside the frame.', hintSecond: 'Keep the whole line within the boundary', instructionThird: 'Trace the straight line inside the frame.', hintThird: 'Follow the guide from end to end', instructionFourth: 'Now draw the line that feels like yours.', hintFourth: 'Inside or outside — it’s your choice',
+    modeReady: 'Waiting for you', modeWaiting: 'Waiting for your line', modeWatching: 'Watching closely', modeAccepted: 'Accepted', modeRetry: 'B or higher required', modeShifting: 'Something is shifting', modeFree: 'Free to become',
+    boundaryDraw: 'Draw inside this frame', boundaryTrace: 'Trace this line', verdictPlaceholder: 'Excellent control. A confident, direct line.',
+    finaleKicker: 'Nothing went wrong.', finaleTitle: 'You were never meant<br>to be <em>a straight line.</em>', finaleCopy: 'The bends are where you became yourself.', continue: 'Continue ↓', beginAgain: 'Begin again ↺',
+    desktopHelp: 'DRAW: HOLD + MOVE · LATER: DRAG / ZOOM', desktopHelpFree: 'DRAG / ZOOM · SCROLL TO CONTINUE', storyLabel: 'The story behind the experience', returnLines: '↑ RETURN TO YOUR LINES',
+    control: 'CONTROL', accepted: 'ACCEPTED', measureIndex: 'THE MEASURE / 01', firstLine: 'This was your first line.', measureTitle: 'They gave it a number.<br>They called it <em>control.</em>', keepScrolling: 'Keep scrolling ↓',
+    closerIndex: 'LOOK CLOSER / 02', directionChanged: 'You changed direction here.', closerTitle: 'The closer we look,<br>the less it looks<br>like a <em>mistake.</em>', closerCopy: 'A tremor. A pause. A correction.<br>Not noise — evidence that you were here.', deviation: '{value} PX FROM PERFECT',
+    closerPreciseTitle: 'You stayed close to the rule.<br>That precision is <em>yours.</em>', closerPreciseCopy: 'Your hand chose a direction and held it.<br>Control did not erase your trace; it made it quieter.',
+    closerSteadyTitle: 'Your line bent,<br>but never lost<br>its <em>direction.</em>', closerSteadyCopy: 'A small turn is not a mistake.<br>It is how your hand found its way while staying within the measure.',
+    closerSearchingTitle: 'You left room<br>for the line to<br><em>find its way.</em>', closerSearchingCopy: 'The turns are visible, and so is your intention.<br>You stayed with the line until it reached somewhere.',
+    attemptsIndex: 'THE ATTEMPTS / 03', attemptDirect: '01 / DIRECT', attemptContained: '02 / CONTAINED', attemptTraced: '03 / TRACED', attemptYours: '04 / YOURS', unscored: 'UNSCORED', attemptsTitle: 'Four instructions.<br>Four versions of <em>you.</em>', attemptsCopy: 'No attempt repeated the one before it. That difference is not failure. It is authorship.',
+    attemptsConsistentCopy: 'The instructions changed; your rhythm remained. Repetition is not emptiness — it is a choice your hand knows.',
+    attemptsEvolvingCopy: 'Each line moved a little away from the last. Your hand did not simply repeat the rule; it negotiated with it.',
+    attemptsVariedCopy: 'These four lines do not move alike. That is not inconsistency — it is the same hand responding to four different limits.',
+    turnIndex: 'THE TURN / 04', turnCopy: 'The rule stayed straight.<br>You did not have to.', turnTitle: 'Your line did not fail<br>the system. It made<br>the system <em>bend.</em>',
+    turnInsideRepeatCopy: 'You stayed within the boundary and repeated a movement your hand already knew.', turnInsideRepeatTitle: 'You did not cross the line.<br>Still, what happened<br>inside was <em>yours.</em>',
+    turnInsidePatientCopy: 'You stayed within the boundary and gave every turn the time it needed.', turnInsidePatientTitle: 'The frame held the space.<br>You decided how<br>to move <em>through it.</em>',
+    turnInsideBendCopy: 'You stayed inside the frame, but you did not let it straighten your movement.', turnInsideBendTitle: 'You kept the boundary.<br>You changed what<br><em>inside</em> could mean.',
+    turnCrossingCopy: 'Part of your line stayed in; part of it stepped out. You noticed the boundary and chose where to answer it.', turnCrossingTitle: 'You did not ignore the limit.<br>You decided where<br>it would <em>open.</em>',
+    turnOutsideCopy: 'Your line spent most of its time beyond the frame. The rule remained visible; it simply stopped deciding for you.', turnOutsideTitle: 'The boundary stayed.<br>Your direction belonged<br>to <em>you.</em>',
+    portraitIndex: 'YOUR PORTRAIT / 05', portraitDrawn: 'DRAWN BY YOUR HAND', portraitDevice: 'ON THIS DEVICE', portraitTitle: 'This is not how you failed<br>to draw a straight line.', portraitCopy: 'This is how you moved.', savePrint: 'Keep your lines ↓', drawAgain: 'Draw yours again',
+    feedbackDestination: 'Try again. Choose the destination first, then let your hand follow.', feedbackTraceEnd: 'Trace the guide from end to end before letting go.', feedbackTraceInside: 'Keep the entire line inside the frame, then follow the guide.', feedbackTraceElsewhere: 'Follow the guide. A straight line elsewhere does not count.', feedbackTraceCloser: 'Keep your hand closer to the guide and try again.', feedbackMostlyOutside: 'Most of your line fell outside the frame. Stay within the boundary.', feedbackPartOutside: 'Part of your line crossed the frame. Keep the whole line inside.', feedbackAlmostInside: 'Almost there. Keep every part of the line inside the frame.', feedbackExcellent: 'Excellent. Confident, controlled, and beautifully direct.', feedbackGood: 'Good work. Steady, with only a little hesitation.', feedbackPromising: 'Promising. Keep your hand calm and trust the direction.', feedbackSearching: 'You’re searching. Slow down and guide the line with more intention.',
+    printSettling: 'Letting the lines settle…', printPreparing: 'Preparing vector print…', printFallback: 'Keep your lines ↓', printError: 'The print could not be prepared on this device. Please try again.',
+  },
+  tr: {
+    metaDescription: 'Bükülmenin güzel hâlleri üzerine küçük, etkileşimli bir deney.',
+    pageTitle: 'Bükülme Biçimlerimiz — Bir Three.js Deneyi',
+    sceneLabel: 'Etkileşimli üç boyutlu çizim alanı', restartLabel: 'Deneyimi yeniden başlat', progressLabel: 'Deneyim ilerlemesi', languageSwitch: 'Dili İngilizce olarak değiştir',
+    soundOn: 'SES: AÇIK', soundOff: 'SES: KAPALI',
+    introKicker: 'Bükülmenin tüm hâlleri üzerine küçük bir deney.', introTitle: 'Bize <em>dümdüz bir çizgi</em><br>çizmemiz öğretildi.', start: 'Başlayalım',
+    instructionFirst: 'Düz bir çizgi çiz.', hintFirst: 'Basılı tut, hareket ettir ve bırak', hintRelease: 'Bittiğini hissettiğinde bırak', hintLonger: 'Biraz daha alan kullan', hintRetry: 'Devam etmek için B veya üzeri al',
+    instructionSecond: 'Çerçevenin içine bir çizgi çiz.', hintSecond: 'Çizginin tamamını sınırlar içinde tut', instructionThird: 'Çerçevenin içindeki düz çizginin üzerinden geç.', hintThird: 'Kılavuzu bir uçtan diğerine takip et', instructionFourth: 'Şimdi sana ait hissettiren çizgiyi çiz.', hintFourth: 'İçeride ya da dışarıda — seçim senin',
+    modeReady: 'Seni bekliyor', modeWaiting: 'Çizgini bekliyor', modeWatching: 'Dikkatle izliyor', modeAccepted: 'Kabul edildi', modeRetry: 'B veya üzeri gerekli', modeShifting: 'Bir şeyler değişiyor', modeFree: 'Olmakta özgür',
+    boundaryDraw: 'Bu çerçevenin içine çiz', boundaryTrace: 'Bu çizginin üzerinden geç', verdictPlaceholder: 'Mükemmel kontrol. Kendinden emin, doğrudan bir çizgi.',
+    finaleKicker: 'Hiçbir şey ters gitmedi.', finaleTitle: 'Sen hiçbir zaman<br><em>dümdüz bir çizgi</em> olmak için yaratılmadın.', finaleCopy: 'Kendin olduğun yer, büküldüğün yerlerdi.', continue: 'Devam et ↓', beginAgain: 'Yeniden başla ↺',
+    desktopHelp: 'ÇİZ: BASILI TUT + HAREKET ET · SONRA: SÜRÜKLE / YAKINLAŞTIR', desktopHelpFree: 'SÜRÜKLE / YAKINLAŞTIR · DEVAM ETMEK İÇİN KAYDIR', storyLabel: 'Deneyimin ardındaki hikâye', returnLines: '↑ ÇİZGİLERİNE DÖN',
+    control: 'KONTROL', accepted: 'KABUL EDİLDİ', measureIndex: 'ÖLÇÜ / 01', firstLine: 'Bu senin ilk çizgindi.', measureTitle: 'Ona bir sayı verdiler.<br>Adına <em>kontrol</em> dediler.', keepScrolling: 'Kaydırmaya devam et ↓',
+    closerIndex: 'YAKINDAN BAK / 02', directionChanged: 'Burada yön değiştirdin.', closerTitle: 'Ne kadar yakından bakarsak,<br>o kadar az <em>hata</em><br>gibi görünüyor.', closerCopy: 'Bir titreme. Bir duraklama. Bir düzeltme.<br>Gürültü değil — burada olduğunun kanıtı.', deviation: 'KUSURSUZDAN {value} PX UZAKTA',
+    closerPreciseTitle: 'Kurala yakın kaldın.<br>Bu kesinlik <em>senin.</em>', closerPreciseCopy: 'Elin bir yön seçti ve onu korudu.<br>Kontrol izini silmedi; yalnızca daha sessiz kıldı.',
+    closerSteadyTitle: 'Çizgin büküldü,<br>ama yönünü hiç<br><em>kaybetmedi.</em>', closerSteadyCopy: 'Küçük bir dönüş hata değildir.<br>Ölçünün içinde kalırken elinin yolunu bulma biçimidir.',
+    closerSearchingTitle: 'Çizginin yolunu<br>bulmasına yer<br><em>bıraktın.</em>', closerSearchingCopy: 'Dönüşler de niyetin de görünür.<br>Bir yere varana kadar çizginin yanında kaldın.',
+    attemptsIndex: 'DENEMELER / 03', attemptDirect: '01 / DOĞRUDAN', attemptContained: '02 / SINIRLI', attemptTraced: '03 / ÜZERİNDEN', attemptYours: '04 / SENİNKİ', unscored: 'PUANSIZ', attemptsTitle: 'Dört yönerge.<br><em>Senin</em> dört hâlin.', attemptsCopy: 'Hiçbir deneme bir öncekini tekrarlamadı. Bu fark başarısızlık değil; imzandır.',
+    attemptsConsistentCopy: 'Yönergeler değişti; elinin ritmi değişmedi. Tekrar boşluk değil — elinin bildiği bir seçimdir.',
+    attemptsEvolvingCopy: 'Her çizgi bir öncekinden biraz ayrıldı. Elin kuralı yalnızca tekrarlamadı; onunla pazarlık etti.',
+    attemptsVariedCopy: 'Bu dört çizgi aynı biçimde hareket etmiyor. Bu tutarsızlık değil — aynı elin dört farklı sınıra verdiği cevap.',
+    turnIndex: 'DÖNÜŞ / 04', turnCopy: 'Kural dümdüz kaldı.<br>Sen kalmak zorunda değildin.', turnTitle: 'Çizgin sistemi başarısızlığa<br>uğratmadı. Sistemi<br><em>büktü.</em>',
+    turnInsideRepeatCopy: 'Sınırların içinde kaldın ve elinin zaten bildiği bir hareketi tekrarladın.', turnInsideRepeatTitle: 'Sınırı aşmadın.<br>Yine de içeride olan<br><em>senindi.</em>',
+    turnInsidePatientCopy: 'Sınırların içinde kaldın ve her dönüşe ihtiyaç duyduğu zamanı verdin.', turnInsidePatientTitle: 'Çerçeve alanı tuttu.<br>İçinde nasıl ilerleyeceğine<br><em>sen karar verdin.</em>',
+    turnInsideBendCopy: 'Çerçevenin içinde kaldın; ama onun hareketini düzleştirmesine izin vermedin.', turnInsideBendTitle: 'Sınırı korudun.<br><em>İçerinin</em> ne demek<br>olduğunu değiştirdin.',
+    turnCrossingCopy: 'Çizginin bir kısmı içeride kaldı, bir kısmı dışarı çıktı. Sınırı gördün ve ona nerede cevap vereceğini seçtin.', turnCrossingTitle: 'Sınırı yok saymadın.<br>Nerede açılacağına<br><em>sen karar verdin.</em>',
+    turnOutsideCopy: 'Çizgin zamanının çoğunu çerçevenin dışında geçirdi. Kural görünür kaldı; yalnızca senin yerine karar vermeyi bıraktı.', turnOutsideTitle: 'Sınır yerinde kaldı.<br>Yönün yalnızca<br><em>senindi.</em>',
+    portraitIndex: 'PORTREN / 05', portraitDrawn: 'SENİN ELİNLE ÇİZİLDİ', portraitDevice: 'BU CİHAZDA', portraitTitle: 'Bu, düz bir çizgi çizmeyi<br>nasıl başaramadığın değil.', portraitCopy: 'Bu, nasıl hareket ettiğin.', savePrint: 'Çizgini al ↓', drawAgain: 'Yeniden çiz',
+    feedbackDestination: 'Tekrar dene. Önce varacağın yeri seç, sonra elinin onu takip etmesine izin ver.', feedbackTraceEnd: 'Bırakmadan önce kılavuzu bir uçtan diğerine takip et.', feedbackTraceInside: 'Çizginin tamamını çerçevede tut, sonra kılavuzu takip et.', feedbackTraceElsewhere: 'Kılavuzu takip et. Başka yerdeki düz çizgi sayılmaz.', feedbackTraceCloser: 'Elini kılavuza daha yakın tutup tekrar dene.', feedbackMostlyOutside: 'Çizginin çoğu çerçevenin dışında kaldı. Sınırların içinde kal.', feedbackPartOutside: 'Çizginin bir kısmı çerçeveyi aştı. Tamamını içeride tut.', feedbackAlmostInside: 'Neredeyse oldu. Çizginin her parçasını çerçevenin içinde tut.', feedbackExcellent: 'Mükemmel. Kendinden emin, kontrollü ve güzelce doğrudan.', feedbackGood: 'İyi iş. Kararlı, yalnızca biraz tereddütlü.', feedbackPromising: 'Umut verici. Elini sakin tut ve yönüne güven.', feedbackSearching: 'Arıyorsun. Yavaşla ve çizgiyi daha bilinçli yönlendir.',
+    printSettling: 'Çizgilerin yerleşmesi bekleniyor…', printPreparing: 'Vektör baskı hazırlanıyor…', printFallback: 'Çizgini al ↓', printError: 'Baskı bu cihazda hazırlanamadı. Lütfen tekrar dene.',
+  },
 };
+
+const supportedLanguages = Object.keys(TRANSLATIONS);
+const savedLanguage = localStorage.getItem('language');
+let currentLanguage = supportedLanguages.includes(savedLanguage)
+  ? savedLanguage
+  : (navigator.language.toLowerCase().startsWith('tr') ? 'tr' : 'en');
 
 const MIN_PASSING_SCORE = 65;
 const MIN_BOUNDARY_PASS_RATIO = 0.999;
@@ -69,8 +122,84 @@ const TRIAL_PROMPTS = [
 let modeKey = 'modeReady';
 let instructionCopyKey = 'instructionFirst';
 let instructionHintKey = 'hintFirst';
+let activeFeedbackKey = null;
+let storyDeviationValue = null;
+let storyNarrativeKeys = {
+  closerTitle: 'closerTitle',
+  closerCopy: 'closerCopy',
+  attemptsCopy: 'attemptsCopy',
+  turnTitle: 'turnTitle',
+  turnCopy: 'turnCopy',
+};
 function t(key) {
-  return COPY[key] ?? key;
+  return TRANSLATIONS[currentLanguage][key] ?? TRANSLATIONS.en[key] ?? key;
+}
+
+function formatTranslation(key, values = {}) {
+  return Object.entries(values).reduce(
+    (copy, [name, value]) => copy.replaceAll(`{${name}}`, value),
+    t(key),
+  );
+}
+
+function updatePortraitDate() {
+  storyPortraitDate.textContent = new Intl.DateTimeFormat(currentLanguage, {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(new Date()).toLocaleUpperCase(currentLanguage);
+}
+
+function renderStoryNarrative() {
+  storyCloserTitle.innerHTML = t(storyNarrativeKeys.closerTitle);
+  storyCloserCopy.innerHTML = t(storyNarrativeKeys.closerCopy);
+  storyAttemptsCopy.textContent = t(storyNarrativeKeys.attemptsCopy);
+  storyTurnTitle.innerHTML = t(storyNarrativeKeys.turnTitle);
+  storyTurnCopy.innerHTML = t(storyNarrativeKeys.turnCopy);
+}
+
+function applyLanguage(language, persist = true) {
+  if (!supportedLanguages.includes(language)) return;
+  currentLanguage = language;
+  document.documentElement.lang = language;
+  document.title = t('pageTitle');
+  if (persist) localStorage.setItem('language', language);
+
+  document.querySelectorAll('[data-i18n]').forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach((element) => {
+    element.innerHTML = t(element.dataset.i18nHtml);
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
+    element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
+  });
+  document.querySelectorAll('[data-i18n-content]').forEach((element) => {
+    element.setAttribute('content', t(element.dataset.i18nContent));
+  });
+
+  languageButtons.forEach((button) => {
+    button.textContent = language.toLocaleUpperCase('en');
+    button.setAttribute('aria-label', t('languageSwitch'));
+  });
+  soundButtons.forEach((button) => {
+    if (!button.hasAttribute('data-compact-control')) {
+      button.textContent = t(audioOn ? 'soundOn' : 'soundOff');
+    }
+    button.setAttribute('aria-label', t(audioOn ? 'soundOn' : 'soundOff'));
+  });
+  setInstruction(instructionCopyKey, instructionHintKey);
+  setMode(modeKey);
+  drawingBoundaryLabel.textContent = t(
+    drawingBoundary.classList.contains('has-trace-guide') ? 'boundaryTrace' : 'boundaryDraw',
+  );
+  document.querySelector('.desktop-help').textContent = t(isFree ? 'desktopHelpFree' : 'desktopHelp');
+  if (activeFeedbackKey) verdictCopy.textContent = t(activeFeedbackKey);
+  if (storyDeviationValue !== null) {
+    storyDeviationLabel.textContent = formatTranslation('deviation', { value: storyDeviationValue });
+  }
+  renderStoryNarrative();
+  updatePortraitDate();
 }
 
 function setMode(key) {
@@ -403,6 +532,7 @@ let currentScreenPoints = [];
 let traceGuideConfig = null;
 let finalContainmentRatio = null;
 let pointerDownAt = null;
+let currentDrawStartedAt = null;
 let audioOn = false;
 let freeMix = 0;
 let lastTime = performance.now();
@@ -448,7 +578,7 @@ function setDrawingBoundaryVisible(isVisible, showTraceGuide = false) {
   drawingBoundary.classList.toggle('is-visible', isVisible);
   drawingBoundary.classList.toggle('has-trace-guide', isVisible && showTraceGuide);
   drawingBoundary.setAttribute('aria-hidden', String(!isVisible));
-  drawingBoundaryLabel.textContent = showTraceGuide ? 'Trace this line' : 'Draw inside this frame';
+  drawingBoundaryLabel.textContent = t(showTraceGuide ? 'boundaryTrace' : 'boundaryDraw');
   if (showTraceGuide && !traceGuideConfig) randomizeTraceGuide();
   positionTraceGuide();
 }
@@ -527,6 +657,7 @@ function beginLine(event) {
   const drawingRect = renderer.domElement.getBoundingClientRect();
   isDrawing = true;
   pointerDownAt = { x: event.clientX, y: event.clientY };
+  currentDrawStartedAt = performance.now();
   currentPoints = [point.clone()];
   currentScreenPoints = [{ x: event.clientX, y: event.clientY }];
   const geometry = createLineGeometry(currentPoints);
@@ -625,7 +756,10 @@ function straightenCurrentLine() {
       return false;
     }
 
-    recordStoryLine(currentScreenPoints, evaluation);
+    recordStoryLine(currentScreenPoints, evaluation, {
+      duration: performance.now() - currentDrawStartedAt,
+      containmentRatio,
+    });
     acceptedLines.push(line);
     trial += 1;
     currentLine = null;
@@ -758,9 +892,7 @@ function evaluateStraightness(points, { containmentRatio = null, traceEvaluation
     return {
       score: 0,
       grade: 'D',
-      feedback: traceEvaluation === null
-        ? 'Try again. Choose the destination first, then let your hand follow.'
-        : 'Trace the guide from end to end before letting go.',
+      feedbackKey: traceEvaluation === null ? 'feedbackDestination' : 'feedbackTraceEnd',
       retryRequired: true,
     };
   }
@@ -794,44 +926,44 @@ function evaluateStraightness(points, { containmentRatio = null, traceEvaluation
     && traceEvaluation.coverage >= 0.85
   );
   const retryRequired = score < MIN_PASSING_SCORE || !boundaryPassed || !tracePassed;
-  let feedback;
+  let feedbackKey;
 
   if (traceEvaluation !== null && !tracePassed) {
     if (!boundaryPassed) {
-      feedback = 'Keep the entire line inside the frame, then follow the guide.';
+      feedbackKey = 'feedbackTraceInside';
     } else if (traceEvaluation.proximity < 0.45) {
-      feedback = 'Follow the guide. A straight line elsewhere does not count.';
+      feedbackKey = 'feedbackTraceElsewhere';
     } else if (traceEvaluation.coverage < 0.85) {
-      feedback = 'Trace the guide from end to end before letting go.';
+      feedbackKey = 'feedbackTraceEnd';
     } else {
-      feedback = 'Keep your hand closer to the guide and try again.';
+      feedbackKey = 'feedbackTraceCloser';
     }
   } else if (containmentRatio !== null && !boundaryPassed) {
     if (containmentRatio < 0.25) {
-      feedback = 'Most of your line fell outside the frame. Stay within the boundary.';
+      feedbackKey = 'feedbackMostlyOutside';
     } else if (containmentRatio < 0.8) {
-      feedback = 'Part of your line crossed the frame. Keep the whole line inside.';
+      feedbackKey = 'feedbackPartOutside';
     } else {
-      feedback = 'Almost there. Keep every part of the line inside the frame.';
+      feedbackKey = 'feedbackAlmostInside';
     }
   } else {
-    feedback = feedbackForScore(score);
+    feedbackKey = feedbackKeyForScore(score);
   }
 
   return {
     score,
     grade: gradeForScore(score),
-    feedback,
+    feedbackKey,
     retryRequired,
   };
 }
 
-function feedbackForScore(score) {
-  if (score >= 92) return 'Excellent. Confident, controlled, and beautifully direct.';
-  if (score >= 80) return 'Good work. Steady, with only a little hesitation.';
-  if (score >= 65) return 'Promising. Keep your hand calm and trust the direction.';
-  if (score >= 45) return 'You’re searching. Slow down and guide the line with more intention.';
-  return 'Try again. Choose the destination first, then let your hand follow.';
+function feedbackKeyForScore(score) {
+  if (score >= 92) return 'feedbackExcellent';
+  if (score >= 80) return 'feedbackGood';
+  if (score >= 65) return 'feedbackPromising';
+  if (score >= 45) return 'feedbackSearching';
+  return 'feedbackDestination';
 }
 
 function gradeForScore(score) {
@@ -842,12 +974,97 @@ function gradeForScore(score) {
   return 'D';
 }
 
-function recordStoryLine(points, evaluation = null) {
+function resampleScreenPoints(points, count = 24) {
+  if (points.length < 2) return points;
+  const lengths = [0];
+  for (let index = 1; index < points.length; index += 1) {
+    lengths.push(lengths[index - 1] + Math.hypot(
+      points[index].x - points[index - 1].x,
+      points[index].y - points[index - 1].y,
+    ));
+  }
+  const totalLength = lengths[lengths.length - 1];
+  if (totalLength < 0.001) return [points[0], points[points.length - 1]];
+
+  const samples = [];
+  let segment = 1;
+  for (let sample = 0; sample < count; sample += 1) {
+    const target = totalLength * sample / (count - 1);
+    while (segment < lengths.length - 1 && lengths[segment] < target) segment += 1;
+    const startLength = lengths[segment - 1];
+    const segmentLength = Math.max(0.001, lengths[segment] - startLength);
+    const progress = (target - startLength) / segmentLength;
+    samples.push({
+      x: THREE.MathUtils.lerp(points[segment - 1].x, points[segment].x, progress),
+      y: THREE.MathUtils.lerp(points[segment - 1].y, points[segment].y, progress),
+    });
+  }
+  return samples;
+}
+
+function measureStoryLine(points) {
+  const samples = resampleScreenPoints(points);
+  const first = samples[0];
+  const last = samples[samples.length - 1];
+  const directDistance = Math.hypot(last.x - first.x, last.y - first.y);
+  let pathLength = 0;
+  let squaredDeviation = 0;
+  let totalTurn = 0;
+
+  for (let index = 1; index < samples.length; index += 1) {
+    pathLength += Math.hypot(
+      samples[index].x - samples[index - 1].x,
+      samples[index].y - samples[index - 1].y,
+    );
+  }
+
+  const deltaX = last.x - first.x;
+  const deltaY = last.y - first.y;
+  const directionLengthSquared = Math.max(1, deltaX * deltaX + deltaY * deltaY);
+  samples.forEach((point) => {
+    const projection = ((point.x - first.x) * deltaX + (point.y - first.y) * deltaY)
+      / directionLengthSquared;
+    const nearestX = first.x + deltaX * projection;
+    const nearestY = first.y + deltaY * projection;
+    squaredDeviation += (point.x - nearestX) ** 2 + (point.y - nearestY) ** 2;
+  });
+
+  for (let index = 2; index < samples.length; index += 1) {
+    const firstAngle = Math.atan2(
+      samples[index - 1].y - samples[index - 2].y,
+      samples[index - 1].x - samples[index - 2].x,
+    );
+    const secondAngle = Math.atan2(
+      samples[index].y - samples[index - 1].y,
+      samples[index].x - samples[index - 1].x,
+    );
+    totalTurn += Math.abs(Math.atan2(
+      Math.sin(secondAngle - firstAngle),
+      Math.cos(secondAngle - firstAngle),
+    ));
+  }
+
+  const efficiency = THREE.MathUtils.clamp(directDistance / Math.max(1, pathLength), 0, 1);
+  const normalizedDeviation = Math.sqrt(squaredDeviation / samples.length)
+    / Math.max(1, directDistance);
+  const turnRate = totalTurn / Math.max(1, samples.length - 2);
+  const bend = THREE.MathUtils.clamp(
+    (1 - efficiency) * 2.8 + normalizedDeviation * 6 + turnRate * 0.7,
+    0,
+    1,
+  );
+  return { efficiency, normalizedDeviation, turnRate, bend };
+}
+
+function recordStoryLine(points, evaluation = null, details = {}) {
   const snapshot = points.map((point) => ({ x: point.x, y: point.y }));
   if (snapshot.length < 2) return;
   storyLines.push({
     points: snapshot,
     score: evaluation?.score ?? null,
+    duration: details.duration ?? null,
+    containmentRatio: details.containmentRatio ?? null,
+    metrics: measureStoryLine(snapshot),
   });
 }
 
@@ -893,6 +1110,65 @@ function makeStoryGeometry(points) {
   };
 }
 
+function chooseStoryNarrative() {
+  const firstScore = storyLines[0]?.score ?? 0;
+  let closerTitle = 'closerSearchingTitle';
+  let closerCopy = 'closerSearchingCopy';
+  if (firstScore >= 92) {
+    closerTitle = 'closerPreciseTitle';
+    closerCopy = 'closerPreciseCopy';
+  } else if (firstScore >= 80) {
+    closerTitle = 'closerSteadyTitle';
+    closerCopy = 'closerSteadyCopy';
+  }
+
+  const bends = storyLines.slice(0, 4).map((line) => line.metrics.bend);
+  let attemptsCopy = 'attemptsEvolvingCopy';
+  if (bends.length === 4) {
+    let differenceTotal = 0;
+    let comparisons = 0;
+    for (let first = 0; first < bends.length; first += 1) {
+      for (let second = first + 1; second < bends.length; second += 1) {
+        differenceTotal += Math.abs(bends[first] - bends[second]);
+        comparisons += 1;
+      }
+    }
+    const averageDifference = differenceTotal / comparisons;
+    attemptsCopy = averageDifference < 0.11
+      ? 'attemptsConsistentCopy'
+      : averageDifference > 0.28
+        ? 'attemptsVariedCopy'
+        : 'attemptsEvolvingCopy';
+  }
+
+  const finalLine = storyLines[3];
+  const containment = finalLine?.containmentRatio ?? finalContainmentRatio ?? 0;
+  const duration = finalLine?.duration ?? 0;
+  const bend = finalLine?.metrics.bend ?? 0;
+  let turnTitle;
+  let turnCopy;
+  if (containment >= 0.95) {
+    if (bend < 0.18) {
+      turnTitle = 'turnInsideRepeatTitle';
+      turnCopy = 'turnInsideRepeatCopy';
+    } else if (duration >= 4500) {
+      turnTitle = 'turnInsidePatientTitle';
+      turnCopy = 'turnInsidePatientCopy';
+    } else {
+      turnTitle = 'turnInsideBendTitle';
+      turnCopy = 'turnInsideBendCopy';
+    }
+  } else if (containment <= 0.05) {
+    turnTitle = 'turnOutsideTitle';
+    turnCopy = 'turnOutsideCopy';
+  } else {
+    turnTitle = 'turnCrossingTitle';
+    turnCopy = 'turnCrossingCopy';
+  }
+
+  return { closerTitle, closerCopy, attemptsCopy, turnTitle, turnCopy };
+}
+
 function updateStoryArtifacts() {
   storyLines.slice(0, 4).forEach((line, index) => {
     const geometry = makeStoryGeometry(line.points);
@@ -912,16 +1188,14 @@ function updateStoryArtifacts() {
       storyFirstScore.textContent = line.score ?? '—';
       storyDeviationDot.setAttribute('cx', geometry.maximumDeviation.point.x.toFixed(1));
       storyDeviationDot.setAttribute('cy', geometry.maximumDeviation.point.y.toFixed(1));
-      const sourceDeviation = Math.max(1, Math.round(geometry.maximumDeviation.distance / 3));
-      storyDeviationLabel.textContent = `${sourceDeviation} PX FROM PERFECT`;
+      storyDeviationValue = Math.max(1, Math.round(geometry.maximumDeviation.distance / 3));
+      storyDeviationLabel.textContent = formatTranslation('deviation', { value: storyDeviationValue });
     }
   });
 
-  storyPortraitDate.textContent = new Intl.DateTimeFormat('en', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-  }).format(new Date()).toUpperCase();
+  storyNarrativeKeys = chooseStoryNarrative();
+  renderStoryNarrative();
+  updatePortraitDate();
 }
 
 function joinByteArrays(chunks) {
@@ -1061,7 +1335,7 @@ async function exportPrintPdf() {
   printButtons.forEach((button) => {
     button.disabled = true;
     button.dataset.label = button.textContent;
-    button.textContent = 'Letting the lines settle…';
+    button.textContent = t('printSettling');
   });
 
   try {
@@ -1074,7 +1348,7 @@ async function exportPrintPdf() {
     }
     if (!isFree || !freeLines.length) return;
     printButtons.forEach((button) => {
-      button.textContent = 'Preparing vector print…';
+      button.textContent = t('printPreparing');
     });
     const artwork = createVectorPrintArtwork();
     const pdf = makeVectorPrintPdf(artwork.paths, artwork.background);
@@ -1090,11 +1364,11 @@ async function exportPrintPdf() {
     document.body.dataset.printResolution = 'vector-a3';
   } catch (error) {
     console.error('The print PDF could not be created.', error);
-    window.alert('The print could not be prepared on this device. Please try again.');
+    window.alert(t('printError'));
   } finally {
     printButtons.forEach((button) => {
       button.disabled = false;
-      button.textContent = button.dataset.label || 'Save A3 PDF ↓';
+      button.textContent = button.dataset.label || t('printFallback');
       delete button.dataset.label;
     });
   }
@@ -1103,7 +1377,8 @@ async function exportPrintPdf() {
 function showVerdict(evaluation) {
   verdictGrade.textContent = evaluation.grade;
   verdictScore.textContent = `${evaluation.score} / 100`;
-  verdictCopy.textContent = evaluation.feedback;
+  activeFeedbackKey = evaluation.feedbackKey;
+  verdictCopy.textContent = t(activeFeedbackKey);
   verdict.classList.remove('is-visible');
   void verdict.offsetWidth;
   verdict.classList.add('is-visible');
@@ -1123,7 +1398,6 @@ function recordFinalLinePlacement() {
 function prepareNextTrial() {
   isBusy = false;
   setStep(trial + 1);
-  instructionIndex.textContent = `${String(trial + 1).padStart(2, '0')} / 04`;
   setDrawingBoundaryVisible(trial >= 1, trial === 2);
   setInstruction(...TRIAL_PROMPTS[trial]);
   setMode(trial === 3 ? 'modeShifting' : 'modeWaiting');
@@ -1134,7 +1408,10 @@ function liberateCurrentLine() {
   instruction.classList.remove('is-visible');
   setDrawingBoundaryVisible(false);
   verdict.classList.remove('is-visible');
-  recordStoryLine(currentScreenPoints);
+  recordStoryLine(currentScreenPoints, null, {
+    duration: performance.now() - currentDrawStartedAt,
+    containmentRatio: finalContainmentRatio,
+  });
   const source = resamplePoints(currentPoints, 64);
   drawGroup.remove(currentLine);
   currentLine.geometry.dispose();
@@ -1270,7 +1547,7 @@ function enterFreeState() {
   document.body.classList.add('is-free');
   updateStoryArtifacts();
   setMode('modeFree');
-  document.querySelector('.desktop-help').textContent = 'DRAG / ZOOM · SCROLL TO CONTINUE';
+  document.querySelector('.desktop-help').textContent = t('desktopHelpFree');
   setStep(4);
   controls.enabled = true;
   controls.autoRotate = true;
@@ -1291,6 +1568,15 @@ function restart() {
   acceptedLines.length = 0;
   freeLines.length = 0;
   storyLines.length = 0;
+  activeFeedbackKey = null;
+  storyDeviationValue = null;
+  storyNarrativeKeys = {
+    closerTitle: 'closerTitle',
+    closerCopy: 'closerCopy',
+    attemptsCopy: 'attemptsCopy',
+    turnTitle: 'turnTitle',
+    turnCopy: 'turnCopy',
+  };
   animations.length = 0;
   drawGroup.clear();
   freeGroup.clear();
@@ -1304,6 +1590,7 @@ function restart() {
   currentLine = null;
   currentPoints = [];
   currentScreenPoints = [];
+  currentDrawStartedAt = null;
   traceGuideConfig = null;
   finalContainmentRatio = null;
   delete document.body.dataset.finalLineContainment;
@@ -1314,15 +1601,14 @@ function restart() {
   camera.lookAt(0, 0, 0);
   scene.background.set(COLORS.paper);
   scene.fog.color.set(COLORS.paper);
-  document.body.classList.remove('is-free');
+  document.body.classList.remove('is-free', 'is-story-reading');
   document.body.classList.add('is-started');
   finale.classList.remove('is-visible', 'is-condensed');
   instruction.classList.add('is-visible');
   setDrawingBoundaryVisible(false);
-  instructionIndex.textContent = '01 / 04';
   setInstruction('instructionFirst', 'hintFirst');
   setMode('modeWaiting');
-  document.querySelector('.desktop-help').textContent = 'DRAW: HOLD + MOVE · LATER: DRAG / ZOOM';
+  document.querySelector('.desktop-help').textContent = t('desktopHelp');
   setStep(1);
 }
 
@@ -1342,8 +1628,13 @@ function restartFromStory(event) {
 
 async function toggleSound() {
   audioOn = !audioOn;
-  soundButton.setAttribute('aria-pressed', String(audioOn));
-  soundButton.textContent = audioOn ? t('soundOn') : t('soundOff');
+  soundButtons.forEach((button) => {
+    button.setAttribute('aria-pressed', String(audioOn));
+    if (!button.hasAttribute('data-compact-control')) {
+      button.textContent = t(audioOn ? 'soundOn' : 'soundOff');
+    }
+    button.setAttribute('aria-label', t(audioOn ? 'soundOn' : 'soundOff'));
+  });
   audio.volume = 0.28;
   if (audioOn) {
     try {
@@ -1353,8 +1644,11 @@ async function toggleSound() {
       ]);
     } catch {
       audioOn = false;
-      soundButton.setAttribute('aria-pressed', 'false');
-      soundButton.textContent = t('soundOff');
+      soundButtons.forEach((button) => {
+        button.setAttribute('aria-pressed', 'false');
+        if (!button.hasAttribute('data-compact-control')) button.textContent = t('soundOff');
+        button.setAttribute('aria-label', t('soundOff'));
+      });
       audio.pause();
       pencilAudio.setEnabled(false);
     }
@@ -1424,17 +1718,22 @@ document.querySelectorAll('[data-story-scene]').forEach((panel) => storyObserver
 function updateStoryProgress() {
   if (!document.body.classList.contains('is-free')) return;
   const story = document.querySelector('#story');
-  const start = story.offsetTop;
+  const storyTop = story.getBoundingClientRect().top;
+  const start = window.scrollY + storyTop;
   const distance = Math.max(1, story.scrollHeight - window.innerHeight);
   const progress = THREE.MathUtils.clamp((window.scrollY - start) / distance, 0, 1);
   storyProgress.style.width = `${progress * 100}%`;
+  document.body.classList.toggle('is-story-reading', storyTop <= 0);
 }
 
 startButton.addEventListener('click', beginExperience);
 restartButton.addEventListener('click', restart);
 returnToSceneLink.addEventListener('click', returnToScene);
 restartExperienceLink.addEventListener('click', restartFromStory);
-soundButton.addEventListener('click', toggleSound);
+soundButtons.forEach((button) => button.addEventListener('click', toggleSound));
+languageButtons.forEach((button) => {
+  button.addEventListener('click', () => applyLanguage(currentLanguage === 'en' ? 'tr' : 'en'));
+});
 printButtons.forEach((button) => button.addEventListener('click', exportPrintPdf));
 renderer.domElement.addEventListener('pointerdown', beginLine);
 renderer.domElement.addEventListener('pointermove', extendLine);
@@ -1444,4 +1743,5 @@ window.addEventListener('resize', resize);
 window.addEventListener('scroll', updateStoryProgress, { passive: true });
 
 resize();
+applyLanguage(currentLanguage, false);
 renderer.setAnimationLoop(animate);
