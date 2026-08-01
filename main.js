@@ -403,6 +403,22 @@ let freeStateStartedAt = null;
 const animations = [];
 const freeLines = [];
 const acceptedLines = [];
+const ACTIVE_LINE_COLOR = '#c85f4d';
+
+function createLinePalette(colorValue) {
+  const base = new THREE.Color(colorValue);
+  const paper = new THREE.Color(COLORS.paper);
+  const ink = new THREE.Color(COLORS.ink);
+  return [
+    base.clone(),
+    base.clone().lerp(ink, 0.24),
+    base.clone().lerp(paper, 0.18),
+    base.clone().lerp(ink, 0.42),
+    base.clone().lerp(paper, 0.38),
+    base.clone().lerp(ink, 0.12),
+    base.clone().lerp(paper, 0.56),
+  ];
+}
 
 function resize() {
   const width = window.innerWidth;
@@ -855,7 +871,7 @@ function liberateCurrentLine() {
   currentLine.material.dispose();
   currentLine = null;
 
-  const palette = [COLORS.red, COLORS.blue, COLORS.yellow, COLORS.green, COLORS.ink];
+  const palette = createLinePalette(ACTIVE_LINE_COLOR);
   const lineCount = 20;
 
   for (let index = 0; index < lineCount; index += 1) {
