@@ -78,59 +78,82 @@
   <section id="story" class="story-scroll" aria-label="The story behind the experience">
     <header class="story-rail">
       <span>A/02 — THE WAYS WE BEND</span>
+      <i aria-hidden="true"><b id="story-progress"></b></i>
       <a href="#scene" data-return-to-scene>↑ RETURN TO YOUR LINES</a>
     </header>
 
-    <section class="story-panel story-prologue">
-      <div class="mobile mobile-prologue" aria-hidden="true">
-        <i class="wire wire-one"></i>
-        <b class="shape disc-red"></b>
-        <b class="shape disc-blue"></b>
-        <b class="shape leaf-yellow"></b>
-        <b class="shape dot-black"></b>
+    <section class="story-panel story-prologue" data-story-scene="measure">
+      <div class="line-specimen line-specimen-measured" aria-hidden="true">
+        <span class="specimen-axis specimen-axis-x"></span>
+        <span class="specimen-axis specimen-axis-y"></span>
+        <svg viewBox="0 0 1000 600" preserveAspectRatio="none">
+          <path class="story-user-line" data-story-line="0"></path>
+          <path class="story-ideal-line" data-story-ideal="0"></path>
+        </svg>
+        <span class="specimen-start">A</span>
+        <span class="specimen-end">B</span>
+        <div class="score-stamp">
+          <small>CONTROL</small>
+          <strong id="story-first-score">—</strong>
+          <span>ACCEPTED</span>
+        </div>
       </div>
-      <span class="story-index">THE STORY / 01</span>
-      <p class="story-kicker">It began with a pencil.</p>
-      <h2>Before we learned to write,<br>we learned to <em>stay in line.</em></h2>
+      <span class="story-index">THE MEASURE / 01</span>
+      <p class="story-kicker">This was your first line.</p>
+      <h2>They gave it a number.<br>They called it <em>control.</em></h2>
       <small>Keep scrolling ↓</small>
     </section>
 
-    <section class="story-panel story-rule">
-      <span class="story-index">WHAT WE LEARNED / 02</span>
-      <h2>A gold star made<br><em>conformity</em> feel<br>like achievement.</h2>
-      <p>Neat. Correct. Expected.<br>Everything else was something to fix.</p>
-      <b class="story-star" aria-hidden="true">★</b>
-    </section>
-
-    <section class="story-panel story-nature">
-      <div class="mobile mobile-nature" aria-hidden="true">
-        <i class="wire wire-two"></i>
-        <b class="shape blade-blue"></b>
-        <b class="shape pebble-red"></b>
-        <b class="shape moon-black"></b>
-        <b class="shape sun-yellow"></b>
+    <section class="story-panel story-detail" data-story-scene="detail">
+      <span class="story-index">LOOK CLOSER / 02</span>
+      <div class="detail-stage" aria-hidden="true">
+        <svg viewBox="0 0 1000 600" preserveAspectRatio="none">
+          <path class="detail-ghost" data-story-ideal="0"></path>
+          <path class="story-user-line" data-story-line="0"></path>
+          <circle id="story-deviation-dot" r="9"></circle>
+        </svg>
+        <span class="detail-callout"><i></i>You changed direction here.</span>
+        <span class="detail-measure" id="story-deviation-label">— PX FROM PERFECT</span>
       </div>
-      <span class="story-index">LOOK CLOSER / 03</span>
-      <h2>Nature has never<br>used a ruler.</h2>
-      <p>Rivers wander. Branches reach. Mountains rise without asking permission.</p>
+      <h2>The closer we look,<br>the less it looks<br>like a <em>mistake.</em></h2>
+      <p>A tremor. A pause. A correction.<br>Not noise — evidence that you were here.</p>
     </section>
 
-    <section class="story-panel story-turn">
-      <span class="story-index">WHAT REMAINS / 04</span>
-      <p>Every detour.<br>Every mistake.<br>Every change of mind.</p>
-      <h2>The bends are not<br>where we went wrong.</h2>
-    </section>
-
-    <section class="story-panel story-end">
-      <div class="mobile mobile-end" aria-hidden="true">
-        <i class="wire wire-three"></i>
-        <b class="shape drop-red"></b>
-        <b class="shape wing-blue"></b>
-        <b class="shape seed-yellow"></b>
+    <section class="story-panel story-atlas" data-story-scene="attempts">
+      <span class="story-index">THE ATTEMPTS / 03</span>
+      <div class="attempt-atlas" aria-hidden="true">
+        <div class="attempt-row"><span>01 / DIRECT</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="0"></path></svg><b data-story-score="0">—</b></div>
+        <div class="attempt-row"><span>02 / CONTAINED</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="1"></path></svg><b data-story-score="1">—</b></div>
+        <div class="attempt-row"><span>03 / TRACED</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="2"></path></svg><b data-story-score="2">—</b></div>
+        <div class="attempt-row attempt-row-free"><span>04 / YOURS</span><svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="3"></path></svg><b>UNSCORED</b></div>
       </div>
-      <span class="story-index">A DIFFERENT MEASURE / 05</span>
-      <h2>We were never<br>failed straight lines.</h2>
-      <p>We were becoming ourselves.</p>
+      <h2>Four instructions.<br>Four versions of <em>you.</em></h2>
+      <p>No attempt repeated the one before it. That difference is not failure. It is authorship.</p>
+    </section>
+
+    <section class="story-panel story-turn" data-story-scene="bend">
+      <span class="story-index">THE TURN / 04</span>
+      <div class="bending-grid" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <svg viewBox="0 0 1000 600" preserveAspectRatio="none"><path data-story-line="3"></path></svg>
+      </div>
+      <p>The rule stayed straight.<br>You did not have to.</p>
+      <h2>Your line did not fail<br>the system. It made<br>the system <em>bend.</em></h2>
+    </section>
+
+    <section class="story-panel story-end" data-story-scene="portrait">
+      <span class="story-index">YOUR PORTRAIT / 05</span>
+      <div class="line-portrait" aria-hidden="true">
+        <svg viewBox="0 0 1000 600" preserveAspectRatio="none">
+          <path data-story-line="0"></path>
+          <path data-story-line="1"></path>
+          <path data-story-line="2"></path>
+          <path class="portrait-free" data-story-line="3"></path>
+        </svg>
+        <span>DRAWN BY YOUR HAND<br>ON THIS DEVICE<br><b id="story-portrait-date">TODAY</b></span>
+      </div>
+      <h2>This is not how you failed<br>to draw a straight line.</h2>
+      <p>This is how you moved.</p>
       <a href="#scene" data-restart-experience>Draw yours again</a>
     </section>
 

@@ -27,6 +27,11 @@ const soundButton = document.querySelector('#sound');
 const audio = document.querySelector('#audio');
 const returnToSceneLink = document.querySelector('[data-return-to-scene]');
 const restartExperienceLink = document.querySelector('[data-restart-experience]');
+const storyProgress = document.querySelector('#story-progress');
+const storyFirstScore = document.querySelector('#story-first-score');
+const storyDeviationDot = document.querySelector('#story-deviation-dot');
+const storyDeviationLabel = document.querySelector('#story-deviation-label');
+const storyPortraitDate = document.querySelector('#story-portrait-date');
 
 const COPY = {
   soundOn: 'SOUND: ON',
@@ -403,6 +408,7 @@ let freeStateStartedAt = null;
 const animations = [];
 const freeLines = [];
 const acceptedLines = [];
+const storyLines = [];
 
 function resize() {
   const width = window.innerWidth;
@@ -599,6 +605,7 @@ function straightenCurrentLine() {
       return false;
     }
 
+    recordStoryLine(currentScreenPoints, evaluation);
     acceptedLines.push(line);
     trial += 1;
     currentLine = null;
@@ -815,6 +822,88 @@ function gradeForScore(score) {
   return 'D';
 }
 
+function recordStoryLine(points, evaluation = null) {
+  const snapshot = points.map((point) => ({ x: point.x, y: point.y }));
+  if (snapshot.length < 2) return;
+  storyLines.push({
+    points: snapshot,
+    score: evaluation?.score ?? null,
+  });
+}
+
+function makeStoryGeometry(points) {
+  const minimumX = Math.min(...points.map((point) => point.x));
+  const maximumX = Math.max(...points.map((point) => point.x));
+  const minimumY = Math.min(...points.map((point) => point.y));
+  const maximumY = Math.max(...points.map((point) => point.y));
+  const sourceWidth = Math.max(1, maximumX - minimumX);
+  const sourceHeight = Math.max(1, maximumY - minimumY);
+  const scale = Math.min(860 / sourceWidth, 460 / sourceHeight);
+  const offsetX = (1000 - sourceWidth * scale) / 2;
+  const offsetY = (600 - sourceHeight * scale) / 2;
+  const mapped = points.map((point) => ({
+    x: offsetX + (point.x - minimumX) * scale,
+    y: offsetY + (point.y - minimumY) * scale,
+  }));
+  const first = mapped[0];
+  const last = mapped[mapped.length - 1];
+  const deltaX = last.x - first.x;
+  const deltaY = last.y - first.y;
+  const lengthSquared = Math.max(1, deltaX * deltaX + deltaY * deltaY);
+  let maximumDeviation = { distance: 0, point: first };
+
+  mapped.forEach((point) => {
+    const projection = THREE.MathUtils.clamp(
+      ((point.x - first.x) * deltaX + (point.y - first.y) * deltaY) / lengthSquared,
+      0,
+      1,
+    );
+    const nearest = {
+      x: first.x + deltaX * projection,
+      y: first.y + deltaY * projection,
+    };
+    const distance = Math.hypot(point.x - nearest.x, point.y - nearest.y);
+    if (distance > maximumDeviation.distance) maximumDeviation = { distance, point };
+  });
+
+  return {
+    path: mapped.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' '),
+    idealPath: `M${first.x.toFixed(1)} ${first.y.toFixed(1)} L${last.x.toFixed(1)} ${last.y.toFixed(1)}`,
+    maximumDeviation,
+  };
+}
+
+function updateStoryArtifacts() {
+  storyLines.slice(0, 4).forEach((line, index) => {
+    const geometry = makeStoryGeometry(line.points);
+    document.querySelectorAll(`[data-story-line="${index}"]`).forEach((path) => {
+      path.setAttribute('d', geometry.path);
+      const length = Math.ceil(path.getTotalLength());
+      path.style.setProperty('--path-length', length);
+    });
+    document.querySelectorAll(`[data-story-ideal="${index}"]`).forEach((path) => {
+      path.setAttribute('d', geometry.idealPath);
+    });
+    document.querySelectorAll(`[data-story-score="${index}"]`).forEach((label) => {
+      label.textContent = line.score === null ? '—' : String(line.score);
+    });
+
+    if (index === 0) {
+      storyFirstScore.textContent = line.score ?? '—';
+      storyDeviationDot.setAttribute('cx', geometry.maximumDeviation.point.x.toFixed(1));
+      storyDeviationDot.setAttribute('cy', geometry.maximumDeviation.point.y.toFixed(1));
+      const sourceDeviation = Math.max(1, Math.round(geometry.maximumDeviation.distance / 3));
+      storyDeviationLabel.textContent = `${sourceDeviation} PX FROM PERFECT`;
+    }
+  });
+
+  storyPortraitDate.textContent = new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(new Date()).toUpperCase();
+}
+
 function showVerdict(evaluation) {
   verdictGrade.textContent = evaluation.grade;
   verdictScore.textContent = `${evaluation.score} / 100`;
@@ -849,6 +938,7 @@ function liberateCurrentLine() {
   instruction.classList.remove('is-visible');
   setDrawingBoundaryVisible(false);
   verdict.classList.remove('is-visible');
+  recordStoryLine(currentScreenPoints);
   const source = resamplePoints(currentPoints, 64);
   drawGroup.remove(currentLine);
   currentLine.geometry.dispose();
@@ -982,6 +1072,7 @@ function enterFreeState() {
     finale.classList.add('is-condensed');
   }, 5000);
   document.body.classList.add('is-free');
+  updateStoryArtifacts();
   setMode('modeFree');
   document.querySelector('.desktop-help').textContent = 'DRAG / ZOOM · SCROLL TO CONTINUE';
   setStep(4);
@@ -1003,6 +1094,7 @@ function restart() {
   }
   acceptedLines.length = 0;
   freeLines.length = 0;
+  storyLines.length = 0;
   animations.length = 0;
   drawGroup.clear();
   freeGroup.clear();
@@ -1125,6 +1217,23 @@ function animate(time) {
   renderer.render(scene, camera);
 }
 
+const storyObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    entry.target.classList.toggle('is-in-view', entry.isIntersecting);
+  });
+}, { threshold: 0.28 });
+
+document.querySelectorAll('[data-story-scene]').forEach((panel) => storyObserver.observe(panel));
+
+function updateStoryProgress() {
+  if (!document.body.classList.contains('is-free')) return;
+  const story = document.querySelector('#story');
+  const start = story.offsetTop;
+  const distance = Math.max(1, story.scrollHeight - window.innerHeight);
+  const progress = THREE.MathUtils.clamp((window.scrollY - start) / distance, 0, 1);
+  storyProgress.style.width = `${progress * 100}%`;
+}
+
 startButton.addEventListener('click', beginExperience);
 restartButton.addEventListener('click', restart);
 returnToSceneLink.addEventListener('click', returnToScene);
@@ -1135,6 +1244,7 @@ renderer.domElement.addEventListener('pointermove', extendLine);
 renderer.domElement.addEventListener('pointerup', finishLine);
 renderer.domElement.addEventListener('pointercancel', finishLine);
 window.addEventListener('resize', resize);
+window.addEventListener('scroll', updateStoryProgress, { passive: true });
 
 resize();
 renderer.setAnimationLoop(animate);
