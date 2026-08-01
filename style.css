@@ -251,11 +251,13 @@ body.is-free .experience::before {
   transition: box-shadow .18s ease, transform .18s ease;
 }
 
-.story-end > a {
+.story-end-actions > a,
+.story-end-actions > .print-action-large {
   isolation: isolate;
 }
 
-.story-end > a::before {
+.story-end-actions > a::before,
+.story-end-actions > .print-action-large::before {
   position: absolute;
   z-index: 2;
   inset: -7px -9px;
@@ -275,11 +277,13 @@ body.is-free .experience::before {
     transform: translateX(4px);
   }
 
-  .story-end > a:hover {
+  .story-end-actions > a:hover,
+  .story-end-actions > .print-action-large:hover {
     transform: translate(2px, -3px) rotate(-1deg);
   }
 
-  .story-end > a:hover::before {
+  .story-end-actions > a:hover::before,
+  .story-end-actions > .print-action-large:hover::before {
     transform: translate(-2px, 1px) rotate(.35deg) scale(1.015);
   }
 }
@@ -289,12 +293,14 @@ body.is-free .experience::before {
   transform: translate(-1px, -1px);
 }
 
-.story-end > a:active {
+.story-end-actions > a:active,
+.story-end-actions > .print-action-large:active {
   transform: translateY(1px) rotate(.5deg);
 }
 
 #start:focus-visible,
-.story-end > a:focus-visible {
+.story-end-actions > a:focus-visible,
+.story-end-actions > .print-action-large:focus-visible {
   outline: 2px solid var(--red);
   outline-offset: 10px;
 }
@@ -600,6 +606,28 @@ body.is-free .experience::before {
   font-weight: 700;
   letter-spacing: .08em;
   cursor: pointer;
+}
+
+.print-action {
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.print-action:disabled {
+  cursor: wait;
+  opacity: .48;
+}
+
+.print-action:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 10px;
 }
 
 footer {
@@ -925,10 +953,19 @@ body.is-free .story-scroll {
   font: italic clamp(30px, 4vw, 60px)/1 Georgia, serif;
 }
 
-.story-end > a {
+.story-end-actions {
   position: relative;
   z-index: 2;
+  display: flex;
   align-self: flex-start;
+  align-items: center;
+  gap: 20px;
+}
+
+.story-end-actions > a,
+.story-end-actions > .print-action-large {
+  position: relative;
+  z-index: 2;
   padding: 18px 22px;
   border: 0;
   background: var(--yellow);
@@ -941,8 +978,13 @@ body.is-free .story-scroll {
   transition: transform .2s ease;
 }
 
-.story-end > a::before {
+.story-end-actions > a::before,
+.story-end-actions > .print-action-large::before {
   transition: transform .2s steps(2, end);
+}
+
+.print-action-large {
+  min-height: auto;
 }
 
 .mobile-prologue {

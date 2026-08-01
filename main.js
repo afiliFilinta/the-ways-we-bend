@@ -32,6 +32,7 @@ const storyFirstScore = document.querySelector('#story-first-score');
 const storyDeviationDot = document.querySelector('#story-deviation-dot');
 const storyDeviationLabel = document.querySelector('#story-deviation-label');
 const storyPortraitDate = document.querySelector('#story-portrait-date');
+const printButtons = [...document.querySelectorAll('[data-export-print]')];
 
 const COPY = {
   soundOn: 'SOUND: ON',
@@ -103,6 +104,9 @@ const FREE_LINE_GROWTH_PER_SECOND = 0.009;
 const LIBERATION_DURATION_MS = 3600;
 const CAMERA_AUTO_ROTATE_SPEED = 0.24;
 const CAMERA_MOTION_RAMP_MS = 6000;
+const PRINT_SCENE_SETTLE_MS = 8000;
+const A3_WIDTH_POINTS = 1190.55;
+const A3_HEIGHT_POINTS = 841.89;
 
 function createLineGeometry(points) {
   const drawablePoints = points.length === 1 ? [points[0], points[0]] : points;
@@ -920,6 +924,182 @@ function updateStoryArtifacts() {
   }).format(new Date()).toUpperCase();
 }
 
+function joinByteArrays(chunks) {
+  const length = chunks.reduce((total, chunk) => total + chunk.length, 0);
+  const joined = new Uint8Array(length);
+  let offset = 0;
+  chunks.forEach((chunk) => {
+    joined.set(chunk, offset);
+    offset += chunk.length;
+  });
+  return joined;
+}
+
+function makeVectorPrintPdf(paths, background) {
+  const encoder = new TextEncoder();
+  const ascii = (value) => encoder.encode(value);
+  const header = new Uint8Array([
+    ...ascii('%PDF-1.4\n%'), 0xe2, 0xe3, 0xcf, 0xd3, ...ascii('\n'),
+  ]);
+  const backgroundCommand = `${background.map((value) => value.toFixed(4)).join(' ')} rg\n`
+    + `0 0 ${A3_WIDTH_POINTS} ${A3_HEIGHT_POINTS} re f\n`;
+  const lineCommands = paths.map((path) => {
+    const colorCommand = `${path.color.map((value) => value.toFixed(4)).join(' ')} RG`;
+    const [first, ...rest] = path.points;
+    const pointCommands = [
+      `${first.x.toFixed(2)} ${first.y.toFixed(2)} m`,
+      ...rest.map((point) => `${point.x.toFixed(2)} ${point.y.toFixed(2)} l`),
+    ].join('\n');
+    return `${colorCommand}\n${path.width.toFixed(2)} w\n${pointCommands}\nS`;
+  }).join('\n');
+  const content = ascii(`${backgroundCommand}1 J\n1 j\n${lineCommands}\n`);
+  const objects = [
+    ascii('<< /Type /Catalog /Pages 2 0 R >>'),
+    ascii('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'),
+    ascii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${A3_WIDTH_POINTS} ${A3_HEIGHT_POINTS}] /Resources << >> /Contents 4 0 R >>`),
+    joinByteArrays([
+      ascii(`<< /Length ${content.length} >>\nstream\n`),
+      content,
+      ascii('endstream'),
+    ]),
+  ];
+  const chunks = [header];
+  const offsets = [0];
+  let byteOffset = header.length;
+
+  objects.forEach((object, index) => {
+    const wrapped = joinByteArrays([
+      ascii(`${index + 1} 0 obj\n`),
+      object,
+      ascii('\nendobj\n'),
+    ]);
+    offsets.push(byteOffset);
+    chunks.push(wrapped);
+    byteOffset += wrapped.length;
+  });
+
+  const xrefOffset = byteOffset;
+  const xrefRows = offsets.slice(1)
+    .map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`)
+    .join('');
+  chunks.push(ascii(
+    `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${xrefRows}`
+    + `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\n`
+    + `startxref\n${xrefOffset}\n%%EOF\n`,
+  ));
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+
+function colorToSrgbComponents(color) {
+  const srgb = color.clone().convertLinearToSRGB();
+  return [srgb.r, srgb.g, srgb.b];
+}
+
+function createVectorPrintArtwork() {
+  scene.updateMatrixWorld(true);
+  const printCamera = new THREE.PerspectiveCamera(
+    42,
+    A3_WIDTH_POINTS / A3_HEIGHT_POINTS,
+    0.1,
+    180,
+  );
+  printCamera.position.set(5.5, 1.4, 28);
+  printCamera.lookAt(controls.target);
+  printCamera.updateProjectionMatrix();
+  printCamera.updateMatrixWorld(true);
+  const projectedPaths = [];
+  let minimumX = Infinity;
+  let minimumY = Infinity;
+  let maximumX = -Infinity;
+  let maximumY = -Infinity;
+
+  freeLines.forEach((line, index) => {
+    line.updateWorldMatrix(true, false);
+    const points = line.userData.positions.map((point) => {
+      const projected = point.clone().applyMatrix4(line.matrixWorld).project(printCamera);
+      minimumX = Math.min(minimumX, projected.x);
+      minimumY = Math.min(minimumY, projected.y);
+      maximumX = Math.max(maximumX, projected.x);
+      maximumY = Math.max(maximumY, projected.y);
+      return projected;
+    });
+    projectedPaths.push({
+      points,
+      color: colorToSrgbComponents(line.material.color),
+      opacity: THREE.MathUtils.clamp(line.material.opacity * 1.8, 0.34, 1),
+      width: index === 0 ? 0.9 : 0.68,
+    });
+  });
+
+  const centerX = (minimumX + maximumX) / 2;
+  const centerY = (minimumY + maximumY) / 2;
+  const sourceWidth = Math.max(0.001, maximumX - minimumX);
+  const sourceHeight = Math.max(0.001, maximumY - minimumY);
+  const scale = Math.min(
+    A3_WIDTH_POINTS * 0.78 / sourceWidth,
+    A3_HEIGHT_POINTS * 0.68 / sourceHeight,
+  );
+  const background = colorToSrgbComponents(scene.background);
+  const paths = projectedPaths.map((path) => ({
+    width: path.width,
+    color: path.color.map((value, channel) => THREE.MathUtils.lerp(
+      background[channel],
+      value,
+      path.opacity,
+    )),
+    points: path.points.map((point) => ({
+      x: A3_WIDTH_POINTS / 2 + (point.x - centerX) * scale,
+      y: A3_HEIGHT_POINTS / 2 + (point.y - centerY) * scale,
+    })),
+  }));
+
+  return { paths, background };
+}
+
+async function exportPrintPdf() {
+  if (!isFree || !freeLines.length) return;
+  printButtons.forEach((button) => {
+    button.disabled = true;
+    button.dataset.label = button.textContent;
+    button.textContent = 'Letting the lines settle…';
+  });
+
+  try {
+    const remainingSettleTime = Math.max(
+      0,
+      freeStateStartedAt + PRINT_SCENE_SETTLE_MS - performance.now(),
+    );
+    if (remainingSettleTime > 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, remainingSettleTime));
+    }
+    if (!isFree || !freeLines.length) return;
+    printButtons.forEach((button) => {
+      button.textContent = 'Preparing vector print…';
+    });
+    const artwork = createVectorPrintArtwork();
+    const pdf = makeVectorPrintPdf(artwork.paths, artwork.background);
+    const link = document.createElement('a');
+    const timestamp = new Date().toISOString()
+      .slice(0, 19)
+      .replaceAll(':', '')
+      .replace('T', '-');
+    link.href = URL.createObjectURL(pdf);
+    link.download = `the-ways-we-bend-${timestamp}-a3.pdf`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+    document.body.dataset.printResolution = 'vector-a3';
+  } catch (error) {
+    console.error('The print PDF could not be created.', error);
+    window.alert('The print could not be prepared on this device. Please try again.');
+  } finally {
+    printButtons.forEach((button) => {
+      button.disabled = false;
+      button.textContent = button.dataset.label || 'Save A3 PDF ↓';
+      delete button.dataset.label;
+    });
+  }
+}
+
 function showVerdict(evaluation) {
   verdictGrade.textContent = evaluation.grade;
   verdictScore.textContent = `${evaluation.score} / 100`;
@@ -1255,6 +1435,7 @@ restartButton.addEventListener('click', restart);
 returnToSceneLink.addEventListener('click', returnToScene);
 restartExperienceLink.addEventListener('click', restartFromStory);
 soundButton.addEventListener('click', toggleSound);
+printButtons.forEach((button) => button.addEventListener('click', exportPrintPdf));
 renderer.domElement.addEventListener('pointerdown', beginLine);
 renderer.domElement.addEventListener('pointermove', extendLine);
 renderer.domElement.addEventListener('pointerup', finishLine);
