@@ -183,7 +183,7 @@ const COLORS = {
 };
 
 const PENCIL_AUDIO_URL = './audio/pencil-on-paper.mp3';
-const PENCIL_AUDIO_GAIN = 1.25;
+const PENCIL_AUDIO_GAIN = 6;
 const DRAWING_LINE_WIDTH = 2.4;
 const FREE_LINE_WIDTH = 1;
 const MIN_FREE_LINE_SCALE = 0.001;
